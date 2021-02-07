@@ -15,6 +15,7 @@ TOOL.ClientConVar["noisescalex"] = "1"
 TOOL.ClientConVar["noisescaley"] = "1"
 TOOL.ClientConVar["noiseoffsetx"] = "0"
 TOOL.ClientConVar["noiseoffsety"] = "0"
+TOOL.ClientConVar["noiserotate"] = "0"
 TOOL.ClientConVar["usebump"] = "0"
 TOOL.ClientConVar["bumptexture"] = ""
 TOOL.ClientConVar["bumpscalex"] = "1"
@@ -70,6 +71,7 @@ function TOOL:LeftClick(trace)
 	local noisescaley = tonumber(self:GetClientInfo("noisescaley"))
 	local noiseoffsetx = tonumber(self:GetClientInfo("noiseoffsetx"))
 	local noiseoffsety = tonumber(self:GetClientInfo("noiseoffsety"))
+	local noiserotate = tonumber(self:GetClientInfo("noiserotate"))
 	local usebump = tobool(self:GetClientInfo("usebump"))
 	local bumptexture = self:GetClientInfo("bumptexture")
 	local bumpscalex = tonumber(self:GetClientInfo("scalex"))
@@ -101,6 +103,7 @@ function TOOL:LeftClick(trace)
 		NoiseScaleY = noisescaley,
 		NoiseOffsetX = noiseoffsetx,
 		NoiseOffsetY = noiseoffsety,
+		NoiseRotate = noiserotate,
 		UseBump = usebump,
 		BumpTexture = bumptexture,
 		BumpScaleX = bumpscalex,
@@ -417,6 +420,7 @@ do
 		CPanel:NumSlider("#tool.advmat.scaley", "advmat_noisescaley", 0.01, 5, 2)
 		CPanel:NumSlider("#tool.advmat.offsetx", "advmat_noiseoffsetx", 0, 5, 2)
 		CPanel:NumSlider("#tool.advmat.offsety", "advmat_noiseoffsety", 0, 5, 2)
+		CPanel:NumSlider("#tool.advmat.rotate", "advmat_noiserotate", -180, 180, 2)
 
 		local noiseTextureReset = CPanel:Button("#tool.advmat.reset.noise")
 
