@@ -1,5 +1,6 @@
 if (SERVER) then
 	util.AddNetworkString("Materialize")
+	CreateConVar("sv_advmat2_cachematerials", true, bit.bor())
 end
 
 advMats = advMats or {}
@@ -32,6 +33,7 @@ function advMats:Set(ent, texture, data, submatid)
 			NoiseScaleY = data.NoiseScaleY or 1,
 			NoiseOffsetX = data.NoiseOffsetX or 0,
 			NoiseOffsetY = data.NoiseOffsetY or 0,
+			NoiseRotate = data.NoiseRotate or 0,
 			UseBump = data.UseBump or false,
 			BumpTexture = data.BumpTexture or "",
 			BumpScaleX = data.BumpScaleX or 1,
@@ -79,7 +81,7 @@ function advMats:Set(ent, texture, data, submatid)
 		local uid = texture .. "+" .. (data.ScaleX or 1) .. "+" .. (data.ScaleY or 1) .. "+" .. (data.OffsetX or 0) .. "+" .. (data.OffsetY or 0) .. "+" .. (data.Rotate or 0)
 
 		if (data.UseNoise) then
-			uid = uid .. (data.NoiseTexture or "detail/noise_detail_01") .. "+" .. (data.NoiseScaleX or 1) .. "+" .. (data.NoiseScaleY or 1) .. "+" .. (data.NoiseOffsetX or 0) .. "+" .. (data.NoiseOffsetY or 0)
+			uid = uid .. (data.NoiseTexture or "detail/noise_detail_01") .. "+" .. (data.NoiseScaleX or 1) .. "+" .. (data.NoiseScaleY or 1) .. "+" .. (data.NoiseOffsetX or 0) .. "+" .. (data.NoiseOffsetY or 0) .. "+" .. (data.NoiseRotate or 0)
 		end
 		
 		if (data.UseBump) then
@@ -140,6 +142,7 @@ function advMats:Set(ent, texture, data, submatid)
 		data.NoiseScaleY = data.NoiseScaleY or 1
 		data.NoiseOffsetX = data.NoiseOffsetX or 0
 		data.NoiseOffsetY = data.NoiseOffsetY or 0
+		data.NoiseRotate = data.NoiseRotate or 0
 		data.UseBump = data.UseBump or false
 		data.BumpTexture = data.BumpTexture or ""
 		data.BumpScaleX = data.BumpScaleX or 1
@@ -168,7 +171,7 @@ function advMats:Set(ent, texture, data, submatid)
 		local uid = texture .. "+" .. data.ScaleX .. "+" .. data.ScaleY .. "+" .. data.OffsetX .. "+" .. data.OffsetY .. "+" .. data.Rotate
 
 		if (data.UseNoise) then
-			uid = uid .. (data.NoiseTexture or "detail/noise_detail_01") .. "+" .. (data.NoiseScaleX or 1) .. "+" .. (data.NoiseScaleY or 1) .. "+" .. (data.NoiseOffsetX or 0) .. "+" .. (data.NoiseOffsetY or 0)
+			uid = uid .. (data.NoiseTexture or "detail/noise_detail_01") .. "+" .. (data.NoiseScaleX or 1) .. "+" .. (data.NoiseScaleY or 1) .. "+" .. (data.NoiseOffsetX or 0) .. "+" .. (data.NoiseOffsetY or 0) .. "+" .. (data.NoiseRotate or 0)
 		end
 		
 		if(data.UseBump) then
@@ -259,6 +262,7 @@ function advMats:Set(ent, texture, data, submatid)
 			local noiseMatrix = Matrix()
 			noiseMatrix:Scale(Vector(1 / data.NoiseScaleX, 1 / data.NoiseScaleY, 1))
 			noiseMatrix:Translate(Vector(data.NoiseOffsetX, data.NoiseOffsetY, 0))
+			noiseMatrix:Rotate(Angle(0, data.NoiseRotate, 0))
 			
 			local bumpMatrix = Matrix()
 			bumpMatrix:Scale(Vector(1 / data.BumpScaleX, 1 / data.BumpScaleY, 1))
@@ -285,6 +289,7 @@ function advMats:Set(ent, texture, data, submatid)
 			NoiseScaleY = data.NoiseScaleY or 1,
 			NoiseOffsetX = data.NoiseOffsetX or 0,
 			NoiseOffsetY = data.NoiseOffsetY or 0,
+			NoiseRotate = data.NoiseRotate or 0,
 			UseBump = data.UseBump or false,
 			BumpTexture = data.BumpTexture or "",
 			BumpScaleX = data.BumpScaleX or 1,
