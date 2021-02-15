@@ -1,6 +1,5 @@
 if (SERVER) then
 	util.AddNetworkString("Materialize")
-	CreateConVar("sv_advmat2_cachematerials", true, bit.bor())
 end
 
 advMats = advMats or {}
@@ -12,11 +11,15 @@ end
 
 function advMats:Set(ent, texture, data, submatid)
 	if (SERVER) then
+		local jsondata = util.TableToJSON(data, true)
+		local compresseddata = serialize.Encode(jsondata) 	-- Convert to JSON and serialize the table into a string so we don't have to use the expensive net.WriteTable()
+															-- Initially tried to use util.Compress and util.Decompress but that doesn't wanna play nice with net.WriteString() for some reason
+
 		net.Start("Materialize")
 		net.WriteEntity(ent)
 		net.WriteString(texture)
-		net.WriteTable(data)
-		net.WriteInt(submatid, 32)
+		net.WriteString(compresseddata)
+		net.WriteInt(submatid, 5)
 		net.Broadcast()
 
 		ent["MaterialData"..submatid] = {
@@ -36,10 +39,6 @@ function advMats:Set(ent, texture, data, submatid)
 			NoiseRotate = data.NoiseRotate or 0,
 			UseBump = data.UseBump or false,
 			BumpTexture = data.BumpTexture or "",
-			BumpScaleX = data.BumpScaleX or 1,
-			BumpScaleY = data.BumpScaleY or 1,
-			BumpOffsetX = data.BumpOffsetX or 0,
-			BumpOffsetY = data.BumpOffsetY or 0,
 			UseLightwarp = data.UseLightwarp or false,
 			LightwarpTexture = data.LightwarpTexture or "",
 			UseEnvMap = data.UseEnvMap or false,
@@ -145,10 +144,6 @@ function advMats:Set(ent, texture, data, submatid)
 		data.NoiseRotate = data.NoiseRotate or 0
 		data.UseBump = data.UseBump or false
 		data.BumpTexture = data.BumpTexture or ""
-		data.BumpScaleX = data.BumpScaleX or 1
-		data.BumpScaleY = data.BumpScaleY or 1
-		data.BumpOffsetX = data.BumpOffsetX or 0
-		data.BumpOffsetY = data.BumpOffsetY or 0
 		data.UseLightwarp = data.UseLightwarp or false
 		data.LightwarpTexture = data.LightwarpTexture or ""
 		data.UseEnvMap = data.UseEnvMap or false
@@ -263,16 +258,11 @@ function advMats:Set(ent, texture, data, submatid)
 			noiseMatrix:Scale(Vector(1 / data.NoiseScaleX, 1 / data.NoiseScaleY, 1))
 			noiseMatrix:Translate(Vector(data.NoiseOffsetX, data.NoiseOffsetY, 0))
 			noiseMatrix:Rotate(Angle(0, data.NoiseRotate, 0))
-			
-			local bumpMatrix = Matrix()
-			bumpMatrix:Scale(Vector(1 / data.BumpScaleX, 1 / data.BumpScaleY, 1))
-			bumpMatrix:Translate(Vector(data.BumpOffsetX, data.BumpOffsetY, 0))
 
 			self.stored[uid] = CreateMaterial(uid, "VertexLitGeneric", matTable)
 			self.stored[uid]:SetTexture("$basetexture", tempMat:GetTexture("$basetexture"))
 			self.stored[uid]:SetMatrix("$basetexturetransform", matrix)
 			self.stored[uid]:SetMatrix("$detailtexturetransform", noiseMatrix)
-			if data.UseBump then self.stored[uid]:SetMatrix("$bumptransform", bumpMatrix) end
 		end
 
 		ent["MaterialData"..submatid] = {
@@ -292,10 +282,6 @@ function advMats:Set(ent, texture, data, submatid)
 			NoiseRotate = data.NoiseRotate or 0,
 			UseBump = data.UseBump or false,
 			BumpTexture = data.BumpTexture or "",
-			BumpScaleX = data.BumpScaleX or 1,
-			BumpScaleY = data.BumpScaleY or 1,
-			BumpOffsetX = data.BumpOffsetX or 0,
-			BumpOffsetY = data.BumpOffsetY or 0,
 			UseLightwarp = data.UseLightwarp or false,
 			LightwarpTexture = data.LightwarpTexture or "",
 			UseEnvMap = data.UseEnvMap or false,
@@ -318,11 +304,12 @@ if (CLIENT) then
 	net.Receive("Materialize", function()
 		local ent = net.ReadEntity()
 		local texture = net.ReadString()
-		local data = net.ReadTable()
-		local submatid = net.ReadInt(32)
+		local data = net.ReadString()
+		local submatid = net.ReadInt(5)	
+		local jsonuncompresseddata = util.JSONToTable(serialize.Decode(data))
 
 		if (IsValid(ent)) then
-			advMats:Set(ent, texture, data, submatid)
+			advMats:Set(ent, texture, jsonuncompresseddata, submatid)
 		end
 	end)
 else
@@ -332,7 +319,7 @@ else
 				net.Start("Materialize")
 				net.WriteEntity(v)
 				net.WriteString(v.MaterialData.texture)
-				net.WriteTable(v.MaterialData)
+				net.WriteString(util.Compress(util.JSONToTable(v.MaterialData)))
 				net.Send(player)
 			end
 		end

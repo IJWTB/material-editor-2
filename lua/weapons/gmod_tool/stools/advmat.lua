@@ -18,10 +18,6 @@ TOOL.ClientConVar["noiseoffsety"] = "0"
 TOOL.ClientConVar["noiserotate"] = "0"
 TOOL.ClientConVar["usebump"] = "0"
 TOOL.ClientConVar["bumptexture"] = ""
-TOOL.ClientConVar["bumpscalex"] = "1"
-TOOL.ClientConVar["bumpscaley"] = "1"
-TOOL.ClientConVar["bumpoffsetx"] = "0"
-TOOL.ClientConVar["bumpoffsety"] = "0"
 TOOL.ClientConVar["uselightwarp"] = "0"
 TOOL.ClientConVar["lightwarptexture"] = ""
 TOOL.ClientConVar["useenvmap"] = "0"
@@ -74,10 +70,6 @@ function TOOL:LeftClick(trace)
 	local noiserotate = tonumber(self:GetClientInfo("noiserotate"))
 	local usebump = tobool(self:GetClientInfo("usebump"))
 	local bumptexture = self:GetClientInfo("bumptexture")
-	local bumpscalex = tonumber(self:GetClientInfo("scalex"))
-	local bumpscaley = tonumber(self:GetClientInfo("scaley"))
-	local bumpoffsetx = tonumber(self:GetClientInfo("offsetx"))
-	local bumpoffsety = tonumber(self:GetClientInfo("offsety"))
 	local uselightwarp = tobool(self:GetClientInfo("uselightwarp"))
 	local lightwarptexture = self:GetClientInfo("lightwarptexture")
 	local useenvmap = tobool(self:GetClientInfo("useenvmap"))
@@ -106,10 +98,6 @@ function TOOL:LeftClick(trace)
 		NoiseRotate = noiserotate,
 		UseBump = usebump,
 		BumpTexture = bumptexture,
-		BumpScaleX = bumpscalex,
-		BumpScaleY = bumpscaley,
-		BumpOffsetX = bumpoffsetx,
-		BumpOffsetY = bumpoffsety,
 		UseLightwarp = uselightwarp,
 		LightwarpTexture = lightwarptexture,
 		UseEnvMap = useenvmap,
@@ -433,26 +421,7 @@ do
 		CPanel:CheckBox("#tool.advmat.usebump", "advmat_usebump")
 		CPanel:ControlHelp("If this box is checked, your material will use the bumpmap texture specified by you below.")
 		CPanel:TextEntry("#tool.advmat.bumptexture", "advmat_bumptexture")
-		local warningBMT = CPanel:Help("These options currently do nothing. the bumpmap scales with the basetexture's translations.")
-		warningBMT:SetTextColor(Color(255, 0, 0))
-		local bTr1 = CPanel:NumSlider("#tool.advmat.scalex", "advmat_bumpscalex", 0.01, 5, 2)
-		local bTr2 = CPanel:NumSlider("#tool.advmat.scaley", "advmat_bumpscaley", 0.01, 5, 2)
-		local bTr3 = CPanel:NumSlider("#tool.advmat.offsetx", "advmat_bumpoffsetx", 0, 5, 2)
-		local bTr4 = CPanel:NumSlider("#tool.advmat.offsety", "advmat_bumpoffsety", 0, 5, 2)
-		
-		local bTrTb = {bTr1, bTr2, bTr3, bTr4}
-		for k, v in pairs(bTrTb) do
-			v:SetDark()
-		end
-		
-		local bumpTextureReset = CPanel:Button("#tool.advmat.reset.bump")
-		
-		function bumpTextureReset:DoClick()
-			for k, v in pairs(transformData) do
-				LocalPlayer():ConCommand("advmat_bump" .. k:lower() .. " " .. v)
-			end
-		end
-		
+			
 		CPanel:CheckBox("#tool.advmat.uselightwarp", "advmat_uselightwarp")
 		CPanel:ControlHelp("If this box ix checked, your material will use the lightwarp texture specified by you below.")
 		CPanel:TextEntry("#tool.advmat.lightwarptexture", "advmat_lightwarptexture")
