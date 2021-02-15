@@ -319,7 +319,7 @@ else
 				net.Start("Materialize")
 				net.WriteEntity(v)
 				net.WriteString(v.MaterialData.texture)
-				net.WriteString(util.Compress(util.JSONToTable(v.MaterialData)))
+				net.WriteString(serialize.Encode(util.TableToJSON(v.MaterialData), true))
 				net.Send(player)
 			end
 		end
