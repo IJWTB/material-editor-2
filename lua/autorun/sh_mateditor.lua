@@ -11,9 +11,10 @@ end
 
 function advMats:Set(ent, texture, data, submatid)
 	if (SERVER) then
-		local jsondata = util.TableToJSON(data)
-		local compresseddata = util.Compress(jsondata)
-		file.Write("fuckinghell.json", compresseddata)
+		local jsondata = util.TableToJSON(data, true)
+		local compresseddata = serialize.Encode(jsondata) 	-- Convert to JSON and serialize the table into a string so we don't have to use the expensive net.WriteTable()
+															-- Initially tried to use util.Compress and util.Decompress but that doesn't wanna play nice with net.WriteString() for some reason
+
 		net.Start("Materialize")
 		net.WriteEntity(ent)
 		net.WriteString(texture)
@@ -305,9 +306,7 @@ if (CLIENT) then
 		local texture = net.ReadString()
 		local data = net.ReadString()
 		local submatid = net.ReadInt(5)	
-		local jsonuncompresseddata = util.Decompress(data)
-		print(texture, data)
-		print(jsonuncompresseddata)
+		local jsonuncompresseddata = util.JSONToTable(serialize.Decode(data))
 
 		if (IsValid(ent)) then
 			advMats:Set(ent, texture, jsonuncompresseddata, submatid)
