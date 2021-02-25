@@ -1,5 +1,6 @@
 if (SERVER) then
 	util.AddNetworkString("Materialize")
+	util.AddNetworkString("advmat2_sendmatqueue")
 end
 
 advMats = advMats or {}
@@ -301,6 +302,7 @@ function advMats:Set(ent, texture, data, submatid)
 end
 
 if (CLIENT) then
+
 	net.Receive("Materialize", function()
 		local ent = net.ReadEntity()
 		local texture = net.ReadString()
@@ -312,17 +314,35 @@ if (CLIENT) then
 			advMats:Set(ent, texture, jsonuncompresseddata, submatid)
 		end
 	end)
+	
+	net.Receive("advmat2_sendmatqueue", function()
+		local matqueue = util.JSONToTable(serialize.Decode(net.ReadString()))
+		local initcount = #matqueue
+		if #matqueue > 0 then
+			timer.Create("loadQueueMats", 0.2, #matqueue, function()
+				notification.AddProgress("advmat2queue", "Requesting Materials", #matqueue / initcount)
+				local thingy = table.maxn(matqueue)
+				advMats:Set(thingy, thingy.texture, thingy, -1)
+				table.Remove(table.maxn(matqueue))
+			end)
+		end
+	end)
+	
 else
 	hook.Add("PlayerInitialSpawn", "AdvMatSet", function(player)
+		local matqueue = {}
 		for k, v in pairs(ents.GetAll()) do
 			if (IsValid(v) and v.MaterialData) then
-				net.Start("Materialize")
-				net.WriteEntity(v)
-				net.WriteString(v.MaterialData.texture)
-				net.WriteString(serialize.Encode(util.TableToJSON(v.MaterialData), true))
-				net.Send(player)
+				matqueue[v.EntIndex()] = v.MaterialData
 			end
 		end
+		
+		if #matqueue > 0 then
+			net.Start("advmat2_sendmatqueue")
+			net.WriteString(serialize.Encode(util.TableToJSON(matqueue)))
+			net.Send(player)
+		end
+		
 	end)
 end
 
