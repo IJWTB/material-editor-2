@@ -318,7 +318,6 @@ if (CLIENT) then
 	
 	hook.Add( "InitPostEntity", "advmat2_readytoreceivemats", function()
 		net.Start( "advmat2_readytoreceive" )
-		net.WriteEntity(LocalPlayer())
 		net.SendToServer()
 	end )
 	
@@ -346,11 +345,10 @@ if (CLIENT) then
 	
 else
 
-net.Receive( "advmat2_readytoreceive", function(player)
-		player = net.ReadEntity()
-	
+	net.Receive( "advmat2_readytoreceive", function(len, player)
 		local matqueue = {}
-		for k, v in pairs(ents.GetAll()) do
+		
+		for k, v in ipairs(ents.GetAll()) do
 			if (IsValid(v) and v["MaterialData"..-1]) then
 				matqueue[v:EntIndex()] = v["MaterialData"..-1]
 			end
