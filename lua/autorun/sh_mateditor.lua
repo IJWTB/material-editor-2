@@ -1,6 +1,7 @@
 if (SERVER) then
 	util.AddNetworkString("Materialize")
 	util.AddNetworkString("advmat2_sendmatqueue")
+	util.AddNetworkString("advmat2_readytoreceive")
 end
 
 advMats = advMats or {}
@@ -315,34 +316,53 @@ if (CLIENT) then
 		end
 	end)
 	
+	hook.Add( "InitPostEntity", "advmat2_readytoreceivemats", function()
+		net.Start( "advmat2_readytoreceive" )
+		net.WriteEntity(LocalPlayer())
+		net.SendToServer()
+	end )
+	
 	net.Receive("advmat2_sendmatqueue", function()
 		local matqueue = util.JSONToTable(serialize.Decode(net.ReadString()))
-		local initcount = #matqueue
-		if #matqueue > 0 then
-			timer.Create("loadQueueMats", 0.2, #matqueue, function()
-				notification.AddProgress("advmat2queue", "Requesting Materials", #matqueue / initcount)
-				local thingy = table.maxn(matqueue)
-				advMats:Set(thingy, thingy.texture, thingy, -1)
-				table.Remove(table.maxn(matqueue))
+		local initcount = table.Count(matqueue)
+		local percdone = 0
+		if table.Count(matqueue) > 0 then
+			timer.Create("loadQueueMats", 0.1, table.Count(matqueue), function()
+				notification.AddProgress("advmat2queue", "Requesting Materials: "..percdone.." of "..initcount, percdone / initcount)
+				advMats:Set(Entity(table.maxn(matqueue)), matqueue[table.maxn(matqueue)].texture, matqueue[table.maxn(matqueue)], -1)
+				matqueue[table.maxn(matqueue)] = nil
+				percdone = percdone + 1
+				
+				if percdone >= initcount then
+					notification.AddProgress("advmat2queue", "Material Requesting Complete!", 1)
+					timer.Simple(3, function()
+						notification.Kill("advmat2queue")
+					end)
+				end
+				
 			end)
 		end
 	end)
 	
 else
-	hook.Add("PlayerInitialSpawn", "AdvMatSet", function(player)
+
+net.Receive( "advmat2_readytoreceive", function(player)
+		player = net.ReadEntity()
+	
 		local matqueue = {}
 		for k, v in pairs(ents.GetAll()) do
-			if (IsValid(v) and v.MaterialData) then
-				matqueue[v.EntIndex()] = v.MaterialData
+			if (IsValid(v) and v["MaterialData"..-1]) then
+				matqueue[v:EntIndex()] = v["MaterialData"..-1]
 			end
 		end
 		
-		if #matqueue > 0 then
+		if table.Count(matqueue) > 0 then
 			net.Start("advmat2_sendmatqueue")
 			net.WriteString(serialize.Encode(util.TableToJSON(matqueue)))
 			net.Send(player)
+		else
+			print("Material Queue requested with empty queue?")
 		end
-		
 	end)
 end
 
