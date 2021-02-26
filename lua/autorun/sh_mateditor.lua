@@ -339,7 +339,7 @@ if (CLIENT) then
 		local initcount = table.Count(matqueue)
 		local percdone = 0
 		
-		jsonmatqueue = "" -- clear the jsonmatqueue now thaat we're done, just in case the client requests it again
+		jsonmatqueue = "" -- clear the jsonmatqueue now that we're done, just in case the client requests it again
 		
 		if table.Count(matqueue) > 0 then
 			timer.Create("loadQueueMats", 0.1, table.Count(matqueue), function()
