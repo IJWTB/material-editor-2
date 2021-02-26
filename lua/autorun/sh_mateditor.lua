@@ -13,14 +13,14 @@ end
 
 function advMats:Set(ent, texture, data, submatid)
 	if (SERVER) then
-		local jsondata = util.TableToJSON(data, true)
-		local compresseddata = serialize.Encode(jsondata) 	-- Convert to JSON and serialize the table into a string so we don't have to use the expensive net.WriteTable()
-															-- Initially tried to use util.Compress and util.Decompress but that doesn't wanna play nice with net.WriteString() for some reason
-
+		local compresseddata = util.Compress(util.TableToJSON(data))
+		local compressedlen = compresseddata:len()
+		
 		net.Start("Materialize")
 		net.WriteEntity(ent)
 		net.WriteString(texture)
-		net.WriteString(compresseddata)
+		net.WriteUInt(compressedlen, 16)
+		net.WriteData(compresseddata, compressedlen)
 		net.WriteInt(submatid, 5)
 		net.Broadcast()
 
@@ -307,13 +307,16 @@ if (CLIENT) then
 	net.Receive("Materialize", function()
 		local ent = net.ReadEntity()
 		local texture = net.ReadString()
-		local data = net.ReadString()
+		local datalen = net.ReadUInt(16)
+		local data = net.ReadData(datalen)
 		local submatid = net.ReadInt(5)	
-		local jsonuncompresseddata = util.JSONToTable(serialize.Decode(data))
-
-		if (IsValid(ent)) then
-			advMats:Set(ent, texture, jsonuncompresseddata, submatid)
+		
+		if (!IsValid(ent)) then
+			return -- ent isn't even valid, don't both decompressing the data
 		end
+		
+		local jsonuncompresseddata = util.JSONToTable(util.Decompress(data))
+		advMats:Set(ent, texture, jsonuncompresseddata, submatid)
 	end)
 	
 	hook.Add( "InitPostEntity", "advmat2_readytoreceivemats", function()
@@ -321,10 +324,26 @@ if (CLIENT) then
 		net.SendToServer()
 	end )
 	
-	net.Receive("advmat2_sendmatqueue", function()
-		local matqueue = util.JSONToTable(serialize.Decode(net.ReadString()))
+	
+	local jsonmatqueue = ""
+	
+	net.Receive("advmat2_sendmatqueue", function( len )
+		local done = net.ReadBool()
+		local data = net.ReadData(len - 8) -- the bool takes a byte, so the remainder of the bits must be the compressed data
+		
+		-- concatenate the data so far and check if we're done receiving it all
+		jsonmatqueue = jsonmatqueue .. data
+		
+		if (!done) then
+			return -- still receiving more incoming data
+		end
+		
+		local matqueue = util.JSONToTable(util.Decompress(jsonmatqueue))
 		local initcount = table.Count(matqueue)
 		local percdone = 0
+		
+		jsonmatqueue = "" -- clear the jsonmatqueue now that we're done, just in case the client requests it again
+		
 		if table.Count(matqueue) > 0 then
 			timer.Create("loadQueueMats", 0.1, table.Count(matqueue), function()
 				notification.AddProgress("advmat2queue", "Requesting Materials: "..percdone.." of "..initcount, percdone / initcount)
@@ -349,15 +368,29 @@ else
 		local matqueue = {}
 		
 		for k, v in ipairs(ents.GetAll()) do
-			if (IsValid(v) and v["MaterialData"..-1]) then
-				matqueue[v:EntIndex()] = v["MaterialData"..-1]
+			if (IsValid(v) and v["MaterialData-1"]) then
+				matqueue[v:EntIndex()] = v["MaterialData-1"]
 			end
 		end
 		
 		if table.Count(matqueue) > 0 then
-			net.Start("advmat2_sendmatqueue")
-			net.WriteString(serialize.Encode(util.TableToJSON(matqueue)))
-			net.Send(player)
+			local MAX_NET_BYTES = 65533 - 1 -- max data the net library can send per message, need 1 byte to send boolean indicating done or not
+			
+			local compressedjson = util.Compress(util.TableToJSON(matqueue))
+			local compressedlen = compressedjson:len()
+			local nummsgs = math.ceil(compressedlen / MAX_NET_BYTES)
+			
+			-- split the data in roughly 64kb chunks to ensure we don't surpass the net library limitations
+			for k = 1, nummsgs do
+				local lowerbound = ((k-1) * MAX_NET_BYTES) + 1
+				local upperbound = k * MAX_NET_BYTES
+				local subdata = string.sub(compressedjson, lowerbound, upperbound)
+				
+				net.Start("advmat2_sendmatqueue")
+				net.WriteBool(k == nummsgs) -- 1 byte indicating if we're done yet
+				net.WriteData(subdata, subdata:len())
+				net.Send(player)
+			end
 		else
 			print("Material Queue requested with empty queue?")
 		end
