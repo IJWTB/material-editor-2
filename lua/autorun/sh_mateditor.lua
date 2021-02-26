@@ -321,10 +321,26 @@ if (CLIENT) then
 		net.SendToServer()
 	end )
 	
-	net.Receive("advmat2_sendmatqueue", function()
-		local matqueue = util.JSONToTable(serialize.Decode(net.ReadString()))
+	
+	local jsonmatqueue = ""
+	
+	net.Receive("advmat2_sendmatqueue", function( len )
+		local done = net.ReadBool()
+		local data = net.ReadData(len - 8) -- the bool takes a byte, so the remainder of the bits must be the compressed data
+		
+		-- concatenate the data so far and check if we're done receiving it all
+		jsonmatqueue = jsonmatqueue .. data
+		
+		if (!done) then
+			return -- still receiving more incoming data
+		end
+		
+		local matqueue = util.JSONToTable(util.Decompress(jsonmatqueue))
 		local initcount = table.Count(matqueue)
 		local percdone = 0
+		
+		jsonmatqueue = "" -- clear the jsonmatqueue now thaat we're done, just in case the client requests it again
+		
 		if table.Count(matqueue) > 0 then
 			timer.Create("loadQueueMats", 0.1, table.Count(matqueue), function()
 				notification.AddProgress("advmat2queue", "Requesting Materials: "..percdone.." of "..initcount, percdone / initcount)
@@ -349,15 +365,29 @@ else
 		local matqueue = {}
 		
 		for k, v in ipairs(ents.GetAll()) do
-			if (IsValid(v) and v["MaterialData"..-1]) then
-				matqueue[v:EntIndex()] = v["MaterialData"..-1]
+			if (IsValid(v) and v["MaterialData-1"]) then
+				matqueue[v:EntIndex()] = v["MaterialData-1"]
 			end
 		end
 		
 		if table.Count(matqueue) > 0 then
-			net.Start("advmat2_sendmatqueue")
-			net.WriteString(serialize.Encode(util.TableToJSON(matqueue)))
-			net.Send(player)
+			local MAX_NET_BYTES = 65533 - 1 -- max data the net library can send per message, need 1 byte to send boolean indicating done or not
+			
+			local compressedjson = util.Compress(util.TableToJSON(matqueue))
+			local compressedlen = compressedjson:len()
+			local nummsgs = math.ceil(compressedlen / MAX_NET_BYTES)
+			
+			-- split the data in roughly 64kb chunks to ensure we don't surpass the net library limitations
+			for k = 1, nummsgs do
+				local lowerbound = ((k-1) * MAX_NET_BYTES) + 1
+				local upperbound = k * MAX_NET_BYTES
+				local subdata = string.sub(compressedjson, lowerbound, upperbound)
+				
+				net.Start("advmat2_sendmatqueue")
+				net.WriteBool(k == nummsgs) -- 1 byte indicating if we're done yet
+				net.WriteData(subdata, subdata:len())
+				net.Send(player)
+			end
 		else
 			print("Material Queue requested with empty queue?")
 		end
