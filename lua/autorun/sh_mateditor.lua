@@ -312,7 +312,7 @@ if (CLIENT) then
 		local submatid = net.ReadInt(5)	
 		
 		if (!IsValid(ent)) then
-			return -- ent isn't even valid, don't both decompressing the data
+			return -- ent isn't even valid, don't bother decompressing the data
 		end
 		
 		local jsonuncompresseddata = util.JSONToTable(util.Decompress(data))
