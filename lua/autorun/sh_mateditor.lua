@@ -294,9 +294,9 @@ function advMats:Set(ent, texture, data, submatid)
 			PhongBoost = data.PhongBoost or 1,
 			PhongFresnel = data.PhongFresnel or "0 0.5 1",
 		}
-		if submatid == -1 then
+		if submatid == -1 and IsValid(ent) then
 			ent:SetMaterial("!" .. uid)
-		elseif submatid > -1 then
+		elseif submatid > -1  and IsValid(ent) then
 			ent:SetSubMaterial(submatid, "!" .. uid)
 		end
 	end
