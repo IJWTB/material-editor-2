@@ -13,14 +13,14 @@ end
 
 function advMats:Set(ent, texture, data, submatid)
 	if (SERVER) then
-		local jsondata = util.TableToJSON(data, true)
-		local compresseddata = serialize.Encode(jsondata) 	-- Convert to JSON and serialize the table into a string so we don't have to use the expensive net.WriteTable()
-															-- Initially tried to use util.Compress and util.Decompress but that doesn't wanna play nice with net.WriteString() for some reason
-
+		local compresseddata = util.Compress(util.TableToJSON(data))
+		local compressedlen = compresseddata:len()
+		
 		net.Start("Materialize")
 		net.WriteEntity(ent)
 		net.WriteString(texture)
-		net.WriteString(compresseddata)
+		net.WriteUInt(compressedlen, 16)
+		net.WriteData(compresseddata, compressedlen)
 		net.WriteInt(submatid, 5)
 		net.Broadcast()
 
@@ -307,13 +307,16 @@ if (CLIENT) then
 	net.Receive("Materialize", function()
 		local ent = net.ReadEntity()
 		local texture = net.ReadString()
-		local data = net.ReadString()
+		local datalen = net.ReadUInt(16)
+		local data = net.ReadData(datalen)
 		local submatid = net.ReadInt(5)	
-		local jsonuncompresseddata = util.JSONToTable(serialize.Decode(data))
-
-		if (IsValid(ent)) then
-			advMats:Set(ent, texture, jsonuncompresseddata, submatid)
+		
+		if (!IsValid(ent)) then
+			return -- ent isn't even valid, don't both decompressing the data
 		end
+		
+		local jsonuncompresseddata = util.JSONToTable(util.Decompress(data))
+		advMats:Set(ent, texture, jsonuncompresseddata, submatid)
 	end)
 	
 	hook.Add( "InitPostEntity", "advmat2_readytoreceivemats", function()
