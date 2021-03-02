@@ -50,7 +50,9 @@ function advMats:Set(ent, texture, data, submatid)
 			UsePhong = data.UsePhong or false,
 			PhongBoost = data.PhongBoost or 1,
 			PhongFresnel = data.PhongFresnel or "0 0.5 1",
-			UseTSway = data.UseTSway or 0
+			UseTSway = data.UseTSway or 0,
+			AlphaType = data.AlphaType or 0,
+			NoCull = data.NoCull or 0
 		}
 
 		if !ent.SubMaterialData then ent.SubMaterialData = {} end
@@ -80,7 +82,7 @@ function advMats:Set(ent, texture, data, submatid)
 
 		texture = texture:lower()
 		texture = string.Trim(texture)
-		local uid = texture .. "+" .. (data.ScaleX or 1) .. "+" .. (data.ScaleY or 1) .. "+" .. (data.OffsetX or 0) .. "+" .. (data.OffsetY or 0) .. "+" .. (data.Rotate or 0)
+		local uid = texture .. "+" .. (data.ScaleX or 1) .. "+" .. (data.ScaleY or 1) .. "+" .. (data.OffsetX or 0) .. "+" .. (data.OffsetY or 0) .. "+" .. (data.Rotate or 0) .. "+" .. (data.AlphaType or 0) .. "+" .. (data.NoCull or 0)
 
 		if (data.UseNoise) then
 			uid = uid .. (data.NoiseTexture or "detail/noise_detail_01") .. "+" .. (data.NoiseScaleX or 1) .. "+" .. (data.NoiseScaleY or 1) .. "+" .. (data.NoiseOffsetX or 0) .. "+" .. (data.NoiseOffsetY or 0) .. "+" .. (data.NoiseRotate or 0)
@@ -161,6 +163,8 @@ function advMats:Set(ent, texture, data, submatid)
 		data.PhongBoost = data.PhongBoost or 1
 		data.PhongFresnel = data.PhongFresnel or "0 0.5 1"
 		data.UseTSway = data.UseTSway or 0
+		data.AlphaType = data.AlphaType or 0
+		data.NoCull = data.NoCull or 0
 
 		texture = texture:lower()
 		texture = string.Trim(texture)
@@ -171,7 +175,7 @@ function advMats:Set(ent, texture, data, submatid)
 			return
 		end
 
-		local uid = texture .. "+" .. data.ScaleX .. "+" .. data.ScaleY .. "+" .. data.OffsetX .. "+" .. data.OffsetY .. "+" .. data.Rotate
+		local uid = texture .. "+" .. data.ScaleX .. "+" .. data.ScaleY .. "+" .. data.OffsetX .. "+" .. data.OffsetY .. "+" .. data.Rotate  .. "+" .. data.AlphaType .. "+" .. data.NoCull
 
 		if (data.UseNoise) then
 			uid = uid .. (data.NoiseTexture or "detail/noise_detail_01") .. "+" .. (data.NoiseScaleX or 1) .. "+" .. (data.NoiseScaleY or 1) .. "+" .. (data.NoiseOffsetX or 0) .. "+" .. (data.NoiseOffsetY or 0) .. "+" .. (data.NoiseRotate or 0)
@@ -208,7 +212,6 @@ function advMats:Set(ent, texture, data, submatid)
 			local matTable = {
 				["$basetexture"] = tempMat:GetName(),
 				["$basetexturetransform"] = "center .5 .5 scale " .. (1 / data.ScaleX) .. " " .. (1 / data.ScaleY) .. " rotate " .. data.Rotate .. " translate " .. data.OffsetX .. " " .. data.OffsetY,
-				["$vertexalpha"] = 0,
 				["$vertexcolor"] = 1
 			}
 
@@ -216,6 +219,20 @@ function advMats:Set(ent, texture, data, submatid)
 				if (k:sub(1, 1) == "$") then
 					matTable[k] = v
 				end
+			end
+			
+			local AlphaTypes = {
+				[1] = "$alphatest",
+				[2] = "$vertexalpha",
+				[3] = "$translucent"
+			}
+			
+			if (data.AlphaType > 0) then
+				matTable[AlphaTypes[data.AlphaType]] = 1
+			end
+			
+			if	(data.NoCull == 1) then
+				matTable["$nocull"] = 1
 			end
 
 			if (data.UseNoise) then
@@ -310,6 +327,7 @@ function advMats:Set(ent, texture, data, submatid)
 			PhongBoost 	= data.PhongBoost or 1,
 			PhongFresnel = data.PhongFresnel or "0 0.5 1",
 			UseTSway 	= data.UseTSway or 0,
+			AlphaType = data.AlphaType or 0
 		}
 		if submatid == -1 and IsValid(ent) then
 			ent:SetMaterial("!" .. uid)

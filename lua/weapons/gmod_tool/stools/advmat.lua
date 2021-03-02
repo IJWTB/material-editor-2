@@ -28,6 +28,8 @@ TOOL.ClientConVar["usephong"] = "0"
 TOOL.ClientConVar["phongboost"] = "1"
 TOOL.ClientConVar["phongfresnel"] = "0, 0.5, 1"
 TOOL.ClientConVar["usetreesway"] = "0"
+TOOL.ClientConVar["alphatype"] = "0"
+TOOL.ClientConVar["nocull"] = "0"
 
 TOOL.DetailWhitelist = {
 	"concrete",
@@ -82,6 +84,8 @@ function TOOL:LeftClick(trace)
 	local phongboost = tonumber(self:GetClientInfo("phongboost"))
 	local phongfresnel = self:GetClientInfo("phongfresnel")
 	local usetreesway = tonumber(self:GetClientInfo("usetreesway"))
+	local alphatype = tonumber(self:GetClientInfo("alphatype"))
+	local nocull = tonumber(self:GetClientInfo("nocull"))
 	
 	local toSet = trace.Entity
 	if toSet:GetClass() == "prop_effect" then toSet = trace.Entity:GetChildren()[1] end
@@ -110,7 +114,9 @@ function TOOL:LeftClick(trace)
 		UsePhong = usephong,
 		PhongBoost = phongboost,
 		PhongFresnel = phongfresnel,
-		UseTSway = usetreesway
+		UseTSway = usetreesway,
+		AlphaType = alphatype,
+		NoCull = nocull
 	}, submatid)
 
 	return true
@@ -120,26 +126,21 @@ function TOOL:RightClick(trace)
 	if (trace.Entity:IsPlayer()) then return false end
 	if (CLIENT) then return true end
 
+	toSet = trace.Entity
+	if trace.Entity:GetClass() == "prop_effect" then toSet = trace.Entity:GetChildren()[1] end
+
 	local submatid = tonumber(self:GetClientInfo("submatid"))
 	local bIsMat = false
 
-	if (IsValid(trace.Entity)) then
-		if (trace.Entity:GetMaterial() != "") then
-			if (trace.Entity:GetMaterial():sub(1, 1) != "!") then
+	if (IsValid(toSet)) then
+		if (toSet:GetMaterial() != "") then
+			if (toSet:GetMaterial():sub(1, 1) != "!") then
 				bIsMat = true
 			end
 		end
 	end
 
-	if submatid == -1 then
-		if (!bIsMat and trace.HitTexture[1] == "*" and !trace.Entity["MaterialData"..submatid]) then
-			return false
-		end
-	else
-		if (!bIsMat and trace.HitTexture[1] == "*" and !trace.Entity.SubMaterialData[submatid]) then
-			return false
-		end
-	end
+
 
 	local tempMat = Material(trace.HitTexture)
 	local hitNoise = tempMat:GetString("$detail")
@@ -154,26 +155,30 @@ function TOOL:RightClick(trace)
 
 	local data = {}
 
-	if submatid == -1 or trace.HitWorld then
-		data = trace.Entity["MaterialData"..submatid] or {
-		texture = bIsMat and trace.Entity:GetMaterial() or trace.HitTexture,
-		scalex = 1,
-		scaley = 1,
-		offsetx = 0,
-		offsety = 0,
-		usenoise = noiseTexture and 1 or 0,
-		noisetexture = noiseTexture
-	}
-	elseif submatid > -1 and trace.HitNonWorld then
-		data = trace.Entity.SubMaterialData[submatid] or {
-		texture = bIsMat and trace.Entity:GetMaterial() or trace.HitTexture,
-		scalex = 1,
-		scaley = 1,
-		offsetx = 0,
-		offsety = 0,
-		usenoise = noiseTexture and 1 or 0,
-		noisetexture = noiseTexture
-	}
+	if bIsMat then
+		if submatid == -1 or trace.HitWorld then
+			data = toSet["MaterialData"..submatid] or {
+			texture = bIsMat and trace.Entity:GetMaterial() or trace.HitTexture,
+			scalex = 1,
+			scaley = 1,
+			offsetx = 0,
+			offsety = 0,
+			usenoise = noiseTexture and 1 or 0,
+			noisetexture = noiseTexture
+		}
+		elseif submatid > -1 and trace.HitNonWorld then
+			data = toSet.SubMaterialData[submatid] or {
+			texture = bIsMat and trace.Entity:GetMaterial() or trace.HitTexture,
+			scalex = 1,
+			scaley = 1,
+			offsetx = 0,
+			offsety = 0,
+			usenoise = noiseTexture and 1 or 0,
+			noisetexture = noiseTexture
+		}
+		end
+	else
+		self:GetOwner():ConCommand("advmat_texture " .. toSet:GetMaterials()[1]) 
 	end
 
 	
@@ -191,8 +196,12 @@ function TOOL:Reload(trace)
 	local submatid = tonumber(self:GetClientInfo("submatid"))
 	if (!IsValid(trace.Entity)) then return false end
 	if (CLIENT) then return true end
+	
+	toSet = trace.Entity
+	
+	if trace.Entity:GetClass() == "prop_effect" then toSet = trace.Entity:GetChildren()[1] end
 
-	advMats:Set(trace.Entity, "", {}, submatid)
+	advMats:Set(toSet, "", {}, submatid)
 
 	return true
 end
@@ -352,11 +361,21 @@ do
 		CPanel:TextEntry("#tool.advmat.envmaptint", "advmat_envmaptint")
 		CPanel:ControlHelp("Enter 3 numbers. They must be in the range of 0 to 1 and must be separated by commas.")
 		
-		local tscombox, tslabel = CPanel:ComboBox("Tree Sway", "advmat_usetreesway")
+		local tscombox, tslab = CPanel:ComboBox("Tree Sway", "advmat_usetreesway")
 		tscombox:AddChoice("None", 0)
 		tscombox:AddChoice("Classic", 1)
 		tscombox:AddChoice("Radial", 2)
 		CPanel:ControlHelp("If enabled, your prop will sway according to the sway type.")
+		
+		local alphabox, alphalab = CPanel:ComboBox("Alpha Type", "advmat_alphatype")
+		alphabox:AddChoice("None", 0)
+		alphabox:AddChoice("AlphaTest", 1)
+		alphabox:AddChoice("Vertex Alpha", 2)
+		alphabox:AddChoice("Translucent", 3)
+		CPanel:ControlHelp("Sets what type of alpha your prop should use if it has transparency in its base texture. If unsure, set to AlphaTest.")
+		
+		CPanel:CheckBox("#tool.advmat.nocull", "advmat_nocull")
+		CPanel:ControlHelp("Prevents the backfaces of a prop from being culled. Useful for infinitely thin dual-sided objects, like foliage.")
 		
 		local phongCheckBox = CPanel:CheckBox("#tool.advmat.usephong", "advmat_usephong")
 		phongCheckBox:SetTextColor(Color(255, 0, 0))
@@ -385,6 +404,8 @@ if (CLIENT) then
 	language.Add("tool.advmat.rotate", "Rotation")
 	language.Add("tool.advmat.usenoise", "Use noise texture")
 	language.Add("tool.advmat.submatid", "SubMaterial ID")
+	
+	language.Add("tool.advmat.nocull", "No Cull")
 
 	language.Add("tool.advmat.noisetexture", "Detail Texture")
 
