@@ -49,7 +49,8 @@ function advMats:Set(ent, texture, data, submatid)
 			EnvMapTint = data.EnvMapTint or "1, 1, 1",
 			UsePhong = data.UsePhong or false,
 			PhongBoost = data.PhongBoost or 1,
-			PhongFresnel = data.PhongFresnel or "0 0.5 1"
+			PhongFresnel = data.PhongFresnel or "0 0.5 1",
+			UseTSway = data.UseTSway or 0
 		}
 
 		if !ent.SubMaterialData then ent.SubMaterialData = {} end
@@ -104,6 +105,10 @@ function advMats:Set(ent, texture, data, submatid)
 			string.Replace(fresnels, " ", "")
 			uid = uid .. (data.PhongBoost) .. "+" .. (fresnels)
 		end
+		
+		if	(data.UseTSway) then
+			uid = uid .. (data.UseTSway)
+		end
 
 		uid = uid:gsub("%.", "-")
 		
@@ -155,6 +160,19 @@ function advMats:Set(ent, texture, data, submatid)
 		data.UsePhong = data.UsePhong or false
 		data.PhongBoost = data.PhongBoost or 1
 		data.PhongFresnel = data.PhongFresnel or "0 0.5 1"
+		data.UseTSway = data.UseTSway or 0
+		data.TS_startheight = data.TS_startheight or 0.2
+		data.TS_height = data.TS_height or 1000
+		data.TS_radius = data.TS_radius or 300
+		data.TS_startradius = data.TS_startradius or 0.1
+		data.TS_speed = data.TS_speed or 1
+		data.TS_strength = data.TS_strength or 10
+		data.TS_scrumblespeed = data.TS_scrumblespeed or 0.1
+		data.TS_scrumblestrength = data.TS_scrumblestrength or 0.1
+		data.TS_scrumblefrequency = data.TS_scrumblefrequency or 0.1
+		data.TS_falloffexp = data.TS_falloffexp or 1.5
+		data.TS_scrumblefalloffexp = data.TS_scrumblefalloffexp or 1
+		data.TS_windvalues = data.TS_windvalues or 1
 
 		texture = texture:lower()
 		texture = string.Trim(texture)
@@ -189,6 +207,10 @@ function advMats:Set(ent, texture, data, submatid)
 			local fresnels = tostring(data.PhongFresnel)
 			string.Replace(fresnels, " ", "")
 			uid = uid .. (data.PhongBoost) .. "+" .. (fresnels)
+		end
+		
+		if	(data.UseTSway) then
+			uid = uid .. (data.UseTSway)
 		end
 
 		uid = uid:gsub("%.", "-")
@@ -241,10 +263,16 @@ function advMats:Set(ent, texture, data, submatid)
 			
 			--Phong doesn't wanna work for some reason, makes props invisible. If anyone can help me fix this, it would be much appreciated.
 			if (data.UsePhong) then
-				matTable["$phong"] = "1"
+				matTable["$phong"] = 1
 				matTable["$phongexponent"] = "1"
 				matTable["$phongboost"] = data.PhongBoost
 				matTable["$phongfresnelranges"] = data.PhongFresnel
+			end
+			
+			if(data.UseTSway > 0) then
+				matTable["$treesway"] = data.UseTSway
+				matTable["$treeSwayStatic"] = 1 -- Only static treesway, cus I don't wanna deal with hundreds of parameters, that env_wind may or may not fuck up anyway.
+				-- If $treeswaystaticvalues is added to gmod, put that in here
 			end
 			
 			if (data.UseLightwarp) then
@@ -268,31 +296,32 @@ function advMats:Set(ent, texture, data, submatid)
 		end
 
 		ent["MaterialData"..submatid] = {
-			texture = texture,
-			SubMatID = submatid,
-			ScaleX = data.ScaleX or 1,
-			ScaleY = data.ScaleY or 1,
-			OffsetX = data.OffsetX or 0,
-			OffsetY = data.OffsetY or 0,
-			Rotate = data.Rotate or 0,
-			UseNoise = data.UseNoise or false,
+			texture 	= texture,
+			SubMatID 	= submatid,
+			ScaleX 		= data.ScaleX or 1,
+			ScaleY 		= data.ScaleY or 1,
+			OffsetX 	= data.OffsetX or 0,
+			OffsetY 	= data.OffsetY or 0,
+			Rotate 		= data.Rotate or 0,
+			UseNoise 	= data.UseNoise or false,
 			NoiseTexture = data.NoiseTexture or "",
 			NoiseScaleX = data.NoiseScaleX or 1,
 			NoiseScaleY = data.NoiseScaleY or 1,
 			NoiseOffsetX = data.NoiseOffsetX or 0,
 			NoiseOffsetY = data.NoiseOffsetY or 0,
 			NoiseRotate = data.NoiseRotate or 0,
-			UseBump = data.UseBump or false,
+			UseBump 	= data.UseBump or false,
 			BumpTexture = data.BumpTexture or "",
 			UseLightwarp = data.UseLightwarp or false,
 			LightwarpTexture = data.LightwarpTexture or "",
-			UseEnvMap = data.UseEnvMap or false,
+			UseEnvMap 	= data.UseEnvMap or false,
 			EnvMapTexture = data.EnvMapTexture or "",
 			EnvMapContrast = data.EnvMapContrast or 0.5,
-			EnvMapTint = data.EnvMapTint or "1, 1, 1",
-			UsePhong = data.UsePhong or false,
-			PhongBoost = data.PhongBoost or 1,
+			EnvMapTint 	= data.EnvMapTint or "1, 1, 1",
+			UsePhong 	= data.UsePhong or false,
+			PhongBoost 	= data.PhongBoost or 1,
 			PhongFresnel = data.PhongFresnel or "0 0.5 1",
+			UseTSway 	= data.UseTSway or 0,
 		}
 		if submatid == -1 and IsValid(ent) then
 			ent:SetMaterial("!" .. uid)

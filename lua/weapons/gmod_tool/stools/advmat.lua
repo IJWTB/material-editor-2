@@ -27,6 +27,8 @@ TOOL.ClientConVar["envmaptint"] = "1, 1, 1"
 TOOL.ClientConVar["usephong"] = "0"
 TOOL.ClientConVar["phongboost"] = "1"
 TOOL.ClientConVar["phongfresnel"] = "0, 0.5, 1"
+TOOL.ClientConVar["usetreesway"] = "0"
+
 TOOL.DetailWhitelist = {
 	"concrete",
 	"metal",
@@ -79,6 +81,7 @@ function TOOL:LeftClick(trace)
 	local usephong = tobool(self:GetClientInfo("usephong"))
 	local phongboost = tonumber(self:GetClientInfo("phongboost"))
 	local phongfresnel = self:GetClientInfo("phongfresnel")
+	local usetreesway = tonumber(self:GetClientInfo("usetreesway"))
 	
 	local toSet = trace.Entity
 	if toSet:GetClass() == "prop_effect" then toSet = trace.Entity:GetChildren()[1] end
@@ -107,6 +110,19 @@ function TOOL:LeftClick(trace)
 		UsePhong = usephong,
 		PhongBoost = phongboost,
 		PhongFresnel = phongfresnel,
+		UseTSway = usetreesway,
+		TS_startheight = tsstartheight,
+		TS_height = tsheight,
+		TS_radius = tsradius,
+		TS_startradius = tsstartradius,
+		TS_speed = tsspeed,
+		TS_strength = tsstrength,
+		TS_scrumblespeed = tsscrumblespeed,
+		TS_scrumblestrength = tsscrumblestrength,
+		TS_scrumblefrequency = tsscrumblefrequency,
+		TS_falloffexp = tsfalloffexp,
+		TS_scrumblefalloffexp = tsscrumblefalloffexp,
+		TS_windvalues = tswindvalues
 	}, submatid)
 
 	return true
@@ -347,6 +363,12 @@ do
 		CPanel:NumSlider("#tool.advmat.envmapcontrast", "advmat_envmapcontrast", 0, 1)
 		CPanel:TextEntry("#tool.advmat.envmaptint", "advmat_envmaptint")
 		CPanel:ControlHelp("Enter 3 numbers. They must be in the range of 0 to 1 and must be separated by commas.")
+		
+		local tscombox, tslabel = CPanel:ComboBox("Tree Sway", "advmat_usetreesway")
+		tscombox:AddChoice("None", 0)
+		tscombox:AddChoice("Classic", 1)
+		tscombox:AddChoice("Radial", 2)
+		CPanel:ControlHelp("If enabled, your prop will sway according to the sway type.")
 		
 		local phongCheckBox = CPanel:CheckBox("#tool.advmat.usephong", "advmat_usephong")
 		phongCheckBox:SetTextColor(Color(255, 0, 0))
