@@ -161,18 +161,6 @@ function advMats:Set(ent, texture, data, submatid)
 		data.PhongBoost = data.PhongBoost or 1
 		data.PhongFresnel = data.PhongFresnel or "0 0.5 1"
 		data.UseTSway = data.UseTSway or 0
-		data.TS_startheight = data.TS_startheight or 0.2
-		data.TS_height = data.TS_height or 1000
-		data.TS_radius = data.TS_radius or 300
-		data.TS_startradius = data.TS_startradius or 0.1
-		data.TS_speed = data.TS_speed or 1
-		data.TS_strength = data.TS_strength or 10
-		data.TS_scrumblespeed = data.TS_scrumblespeed or 0.1
-		data.TS_scrumblestrength = data.TS_scrumblestrength or 0.1
-		data.TS_scrumblefrequency = data.TS_scrumblefrequency or 0.1
-		data.TS_falloffexp = data.TS_falloffexp or 1.5
-		data.TS_scrumblefalloffexp = data.TS_scrumblefalloffexp or 1
-		data.TS_windvalues = data.TS_windvalues or 1
 
 		texture = texture:lower()
 		texture = string.Trim(texture)

@@ -110,19 +110,7 @@ function TOOL:LeftClick(trace)
 		UsePhong = usephong,
 		PhongBoost = phongboost,
 		PhongFresnel = phongfresnel,
-		UseTSway = usetreesway,
-		TS_startheight = tsstartheight,
-		TS_height = tsheight,
-		TS_radius = tsradius,
-		TS_startradius = tsstartradius,
-		TS_speed = tsspeed,
-		TS_strength = tsstrength,
-		TS_scrumblespeed = tsscrumblespeed,
-		TS_scrumblestrength = tsscrumblestrength,
-		TS_scrumblefrequency = tsscrumblefrequency,
-		TS_falloffexp = tsfalloffexp,
-		TS_scrumblefalloffexp = tsscrumblefalloffexp,
-		TS_windvalues = tswindvalues
+		UseTSway = usetreesway
 	}, submatid)
 
 	return true
