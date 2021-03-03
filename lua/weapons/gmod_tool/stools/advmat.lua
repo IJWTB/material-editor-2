@@ -134,7 +134,7 @@ function TOOL:RightClick(trace)
 
 	if (IsValid(toSet)) then
 		if (toSet:GetMaterial() != "") then
-			if (toSet:GetMaterial():sub(1, 1) != "!") then
+			if (toSet:GetMaterial():sub(1, 1) == "!") then
 				bIsMat = true
 			end
 		end
@@ -155,10 +155,13 @@ function TOOL:RightClick(trace)
 
 	local data = {}
 
-	if bIsMat then
+	if bIsMat or trace.HitWorld then
+		local worldTex = trace.HitTexture
+		if trace.HitSky then worldTex = GetConVar("sv_skyname"):GetString() end -- Get skybox texture name if we right click the sky, instead of returning TOOLSSKYBOX
+		
 		if submatid == -1 or trace.HitWorld then
-			data = toSet["MaterialData"..submatid] or {
-			texture = bIsMat and trace.Entity:GetMaterial() or trace.HitTexture,
+			data = toSet["MaterialData-1"] or {
+			texture = bIsMat and trace.Entity:GetMaterial() or worldTex,
 			scalex = 1,
 			scaley = 1,
 			offsetx = 0,
@@ -168,7 +171,7 @@ function TOOL:RightClick(trace)
 		}
 		elseif submatid > -1 and trace.HitNonWorld then
 			data = toSet.SubMaterialData[submatid] or {
-			texture = bIsMat and trace.Entity:GetMaterial() or trace.HitTexture,
+			texture = bIsMat and trace.Entity:GetMaterial() or worldTex,
 			scalex = 1,
 			scaley = 1,
 			offsetx = 0,
