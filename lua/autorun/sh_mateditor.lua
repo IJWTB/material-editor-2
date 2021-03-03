@@ -51,6 +51,14 @@ function advMats:Set(ent, texture, data, submatid)
 			PhongBoost = data.PhongBoost or 1,
 			PhongFresnel = data.PhongFresnel or "0 0.5 1",
 			UseTSway = data.UseTSway or 0,
+			TreeSwaySpeed = data.TreeSwaySpeed or 1,
+			TreeSwayStrength = data.TreeSwayStrength or 0.1,
+			TreeSwayStartHeight = data.TreeSwayStartHeight or 0.1,
+			TreeSwayHeight = data.TreeSwayHeight or 300,
+			TreeSwayStartRadius = data.TreeSwayStartRadius or 0.1,
+			TreeSwayRadius = data.TreeSwayRadius or 100,
+			TreeLeafSpeed = data.TreeLeafSpeed or 0.1,
+			TreeLeafStrength = data.TreeLeafStrength or 0.1,
 			AlphaType = data.AlphaType or 0,
 			NoCull = data.NoCull or 0
 		}
@@ -109,7 +117,7 @@ function advMats:Set(ent, texture, data, submatid)
 		end
 		
 		if	(data.UseTSway) then
-			uid = uid .. (data.UseTSway)
+			uid = uid .. (data.UseTSway) .. "+" .. (data.TreeSwaySpeed or 1) .. "+" .. (data.TreeSwayStrength or 0.1) .. "+" .. (data.TreeLeafSpeed or 0.1) .. "+" .. (data.TreeLeafStrength or 0.1) .. "+" .. (data.TreeSwayStartHeight or 0.1) .. "+" .. (data.TreeSwayHeight or 300) .. "+" .. (data.TreeSwayStartRadius or 0.1) .. "+" .. (data.TreeSwayRadius or 100)
 		end
 
 		uid = uid:gsub("%.", "-")
@@ -163,6 +171,14 @@ function advMats:Set(ent, texture, data, submatid)
 		data.PhongBoost = data.PhongBoost or 1
 		data.PhongFresnel = data.PhongFresnel or "0 0.5 1"
 		data.UseTSway = data.UseTSway or 0
+		data.TreeSwaySpeed = data.TreeSwaySpeed or 1
+		data.TreeSwayStrength = data.TreeSwayStrength or 0.1
+		data.TreeSwayStartHeight = data.TreeSwayStartHeight or 0.1
+		data.TreeSwayHeight = data.TreeSwayHeight or 300
+		data.TreeSwayStartRadius = data.TreeSwayStartRadius or 0.1
+		data.TreeSwayRadius = data.TreeSwayRadius or 100
+		data.TreeLeafSpeed = data.TreeLeafSpeed or 0.1
+		data.TreeLeafStrength = data.TreeLeafStrength or 0.1
 		data.AlphaType = data.AlphaType or 0
 		data.NoCull = data.NoCull or 0
 
@@ -202,7 +218,7 @@ function advMats:Set(ent, texture, data, submatid)
 		end
 		
 		if	(data.UseTSway) then
-			uid = uid .. (data.UseTSway)
+			uid = uid .. (data.UseTSway) .. "+" .. data.TreeSwaySpeed .. "+" .. data.TreeSwayStrength .. data.TreeLeafSpeed .. "+" .. data.TreeLeafStrength .. "+" .. data.TreeSwayStartHeight .. "+" .. data.TreeSwayHeight .. "+" .. data.TreeSwayStartRadius .. "+" .. data.TreeSwayRadius
 		end
 
 		uid = uid:gsub("%.", "-")
@@ -276,6 +292,18 @@ function advMats:Set(ent, texture, data, submatid)
 			
 			if(data.UseTSway > 0) then
 				matTable["$treesway"] = data.UseTSway
+				matTable["$treeSwaySpeed"] = data.TreeSwaySpeed
+				matTable["$treeSwayStrength"] = data.TreeSwayStrength
+				matTable["$treeSwayScrumbleSpeed"] = data.TreeLeafSpeed
+				matTable["$treeSwayScrumbleStrength"] = data.TreeLeafStrength
+				if data.UseTSway == 1 then
+					matTable["$treeSwayHeight"] = data.TreeSwayHeight
+					matTable["$treeSwayStartHeight"] = data.TreeSwayStartHeight
+				elseif data.UseTSway == 2 then
+					matTable["$treeSwayRadius"] = data.TreeSwayRadius
+					matTable["$treeSwayStartRadius"] = data.TreeSwayStartRadius
+				end
+				
 				matTable["$treeSwayStatic"] = 1 -- Only static treesway, cus I don't wanna deal with hundreds of parameters, that env_wind may or may not fuck up anyway.
 				-- If $treeswaystaticvalues is added to gmod, put that in here
 			end
@@ -327,6 +355,14 @@ function advMats:Set(ent, texture, data, submatid)
 			PhongBoost 	= data.PhongBoost or 1,
 			PhongFresnel = data.PhongFresnel or "0 0.5 1",
 			UseTSway 	= data.UseTSway or 0,
+			TreeSwaySpeed = data.TreeSwaySpeed or 1,
+			TreeSwayStrength = data.TreeSwayStrength or 0.1,
+			TreeSwayStartHeight = data.TreeSwayStartHeight or 0.1,
+			TreeSwayHeight = data.TreeSwayHeight or 300,
+			TreeSwayStartRadius = data.TreeSwayStartRadius or 0.1,
+			TreeSwayRadius = data.TreeSwayRadius or 100,
+			TreeLeafSpeed = data.TreeLeafSpeed or 0.1,
+			TreeLeafStrength = data.TreeLeafStrength or 0.1,
 			AlphaType = data.AlphaType or 0
 		}
 		if submatid == -1 and IsValid(ent) then

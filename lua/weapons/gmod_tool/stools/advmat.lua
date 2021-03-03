@@ -28,6 +28,14 @@ TOOL.ClientConVar["usephong"] = "0"
 TOOL.ClientConVar["phongboost"] = "1"
 TOOL.ClientConVar["phongfresnel"] = "0, 0.5, 1"
 TOOL.ClientConVar["usetreesway"] = "0"
+TOOL.ClientConVar["treeswayspeed"] = "1"
+TOOL.ClientConVar["treeswaystrength"] = "0.1"
+TOOL.ClientConVar["treeswaystartheight"] = "0.1"
+TOOL.ClientConVar["treeswayheight"] = "300"
+TOOL.ClientConVar["treeswaystartradius"] = "0.1"
+TOOL.ClientConVar["treeswayradius"] = "100"
+TOOL.ClientConVar["treeleafspeed"] = "0.1"
+TOOL.ClientConVar["treeleafstrength"] = "0.1"
 TOOL.ClientConVar["alphatype"] = "0"
 TOOL.ClientConVar["nocull"] = "0"
 
@@ -84,6 +92,14 @@ function TOOL:LeftClick(trace)
 	local phongboost = tonumber(self:GetClientInfo("phongboost"))
 	local phongfresnel = self:GetClientInfo("phongfresnel")
 	local usetreesway = tonumber(self:GetClientInfo("usetreesway"))
+	local treeswayspeed = tonumber(self:GetClientInfo("treeswayspeed"))
+	local treeswaystrength = tonumber(self:GetClientInfo("treeswaystrength"))
+	local treeswaystartheight = tonumber(self:GetClientInfo("treeswaystartheight"))
+	local treeswayradius = tonumber(self:GetClientInfo("treeswayradius"))
+	local treeswaystartradius = tonumber(self:GetClientInfo("treeswaystartradius"))
+	local treeswayheight = tonumber(self:GetClientInfo("treeswayheight"))
+	local treeleafspeed = tonumber(self:GetClientInfo("treeleafspeed"))
+	local treeleafstrength = tonumber(self:GetClientInfo("treeleafstrength"))
 	local alphatype = tonumber(self:GetClientInfo("alphatype"))
 	local nocull = tonumber(self:GetClientInfo("nocull"))
 	
@@ -115,6 +131,14 @@ function TOOL:LeftClick(trace)
 		PhongBoost = phongboost,
 		PhongFresnel = phongfresnel,
 		UseTSway = usetreesway,
+		TreeSwaySpeed = treeswayspeed,
+		TreeSwayStrength = treeswaystrength,
+		TreeSwayStartHeight = treeswaystartheight,
+		TreeSwayHeight = treeswayheight,
+		TreeSwayStartRadius = treeswaystartradius,
+		TreeSwayRadius = treeswayradius,
+		TreeLeafSpeed = treeleafspeed,
+		TreeLeafStrength = treeleafstrength,
 		AlphaType = alphatype,
 		NoCull = nocull
 	}, submatid)
@@ -368,7 +392,27 @@ do
 		tscombox:AddChoice("None", 0)
 		tscombox:AddChoice("Classic", 1)
 		tscombox:AddChoice("Radial", 2)
-		CPanel:ControlHelp("If enabled, your prop will sway according to the sway type.")
+		CPanel:ControlHelp("If enabled, your prop will sway according to the sway type. DOES NOT WORK WITH BUMPMAPS!")
+		CPanel:NumSlider("#tool.advmat.treeswayspeed", "advmat_treeswayspeed", 0, 100)
+		CPanel:ControlHelp("How quickly the tree sways (as a multiplier of time)")
+		CPanel:NumSlider("#tool.advmat.treeswaystrength", "advmat_treeswaystrength", 0, 500)
+		CPanel:ControlHelp("How much the tree sways (as a multiplier of position)")
+		CPanel:NumSlider("#tool.advmat.treeleafspeed", "advmat_treeleafspeed", 0, 100)
+		CPanel:ControlHelp("How quickly the leaves move (as a multiplier of time)")
+		CPanel:NumSlider("#tool.advmat.treeleafstrength", "advmat_treeleafstrength", 0, 500)
+		CPanel:ControlHelp("How much the leaves move (as a multiplier of position)")
+		
+		CPanel:Help("Classic TS Settings")
+		CPanel:NumSlider("#tool.advmat.treeswaystartheight", "advmat_treeswaystartheight", 0, 1)
+		CPanel:ControlHelp("Portion of the height of the model at which the effect starts to fade in. (0 to 1)")
+		CPanel:NumSlider("#tool.advmat.treeswayheight", "advmat_treeswayheight", 0, 10000)
+		CPanel:ControlHelp("Height at which the effect is on fully (in world units)")
+		
+		CPanel:Help("Radial TS Settings")
+		CPanel:NumSlider("#tool.advmat.treeswaystartradius", "advmat_treeswaystartradius", 0, 1)
+		CPanel:ControlHelp("Portion of radius at which the effect starts to fade in (0 to 1)")
+		CPanel:NumSlider("#tool.advmat.treeswayradius", "advmat_treeswayradius", 0, 10000)
+		CPanel:ControlHelp("Radius at which the effect is on fully (in world units)")
 		
 		local alphabox, alphalab = CPanel:ComboBox("Alpha Type", "advmat_alphatype")
 		alphabox:AddChoice("None", 0)
@@ -407,6 +451,15 @@ if (CLIENT) then
 	language.Add("tool.advmat.rotate", "Rotation")
 	language.Add("tool.advmat.usenoise", "Use noise texture")
 	language.Add("tool.advmat.submatid", "SubMaterial ID")
+	
+	language.Add("tool.advmat.treeswayspeed", "Sway Speed")
+	language.Add("tool.advmat.treeswaystrength", "Sway Strength")
+	language.Add("tool.advmat.treeswaystartheight", "Sway Start Height")
+	language.Add("tool.advmat.treeswayheight", "Sway Height")
+	language.Add("tool.advmat.treeswaystartradius", "Sway Start Radius")
+	language.Add("tool.advmat.treeswayradius", "Sway Radius")
+	language.Add("tool.advmat.treeleafspeed", "Leaf Speed")
+	language.Add("tool.advmat.treeleafstrength", "Leaf Strength")
 	
 	language.Add("tool.advmat.nocull", "No Cull")
 
