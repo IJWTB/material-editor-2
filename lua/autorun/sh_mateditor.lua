@@ -49,8 +49,8 @@ function advMats:Set(ent, texture, data, submatid)
 			EnvMapTint = data.EnvMapTint or "1, 1, 1",
 			UsePhong = data.UsePhong or false,
 			PhongBoost = data.PhongBoost or 1,
-			PhongFresnel = data.PhongFresnel or "0 0.5 1",
-			UseTSway = data.UseTSway or 0,
+			PhongFresnel = data.PhongFresnel or "0, 0.5, 1",
+			UseTreeSway = data.UseTreeSway or 0,
 			TreeSwaySpeed = data.TreeSwaySpeed or 1,
 			TreeSwayStrength = data.TreeSwayStrength or 0.1,
 			TreeSwayStartHeight = data.TreeSwayStartHeight or 0.1,
@@ -113,11 +113,11 @@ function advMats:Set(ent, texture, data, submatid)
 		if (data.UsePhong) then
 			local fresnels = tostring(data.PhongFresnel)
 			string.Replace(fresnels, " ", "")
-			uid = uid .. (data.PhongBoost) .. "+" .. (fresnels)
+			uid = uid .. (data.PhongBoost or 1) .. "+" .. (fresnels or "[0 0.5 1]")
 		end
 		
-		if	(data.UseTSway) then
-			uid = uid .. (data.UseTSway) .. "+" .. (data.TreeSwaySpeed or 1) .. "+" .. (data.TreeSwayStrength or 0.1) .. "+" .. (data.TreeLeafSpeed or 0.1) .. "+" .. (data.TreeLeafStrength or 0.1) .. "+" .. (data.TreeSwayStartHeight or 0.1) .. "+" .. (data.TreeSwayHeight or 300) .. "+" .. (data.TreeSwayStartRadius or 0.1) .. "+" .. (data.TreeSwayRadius or 100)
+		if	(data.UseTreeSway) then
+			uid = uid .. (data.UseTreeSway) .. "+" .. (data.TreeSwaySpeed or 1) .. "+" .. (data.TreeSwayStrength or 0.1) .. "+" .. (data.TreeLeafSpeed or 0.1) .. "+" .. (data.TreeLeafStrength or 0.1) .. "+" .. (data.TreeSwayStartHeight or 0.1) .. "+" .. (data.TreeSwayHeight or 300) .. "+" .. (data.TreeSwayStartRadius or 0.1) .. "+" .. (data.TreeSwayRadius or 100)
 		end
 
 		uid = uid:gsub("%.", "-")
@@ -169,8 +169,8 @@ function advMats:Set(ent, texture, data, submatid)
 		data.EnvMapTint = data.EnvMapTint or "1, 1, 1"
 		data.UsePhong = data.UsePhong or false
 		data.PhongBoost = data.PhongBoost or 1
-		data.PhongFresnel = data.PhongFresnel or "0 0.5 1"
-		data.UseTSway = data.UseTSway or 0
+		data.PhongFresnel = data.PhongFresnel or "0, 0.5, 1"
+		data.UseTreeSway = data.UseTreeSway or 0
 		data.TreeSwaySpeed = data.TreeSwaySpeed or 1
 		data.TreeSwayStrength = data.TreeSwayStrength or 0.1
 		data.TreeSwayStartHeight = data.TreeSwayStartHeight or 0.1
@@ -217,8 +217,8 @@ function advMats:Set(ent, texture, data, submatid)
 			uid = uid .. (data.PhongBoost) .. "+" .. (fresnels)
 		end
 		
-		if	(data.UseTSway) then
-			uid = uid .. (data.UseTSway) .. "+" .. data.TreeSwaySpeed .. "+" .. data.TreeSwayStrength .. data.TreeLeafSpeed .. "+" .. data.TreeLeafStrength .. "+" .. data.TreeSwayStartHeight .. "+" .. data.TreeSwayHeight .. "+" .. data.TreeSwayStartRadius .. "+" .. data.TreeSwayRadius
+		if	(data.UseTreeSway) then
+			uid = uid .. (data.UseTreeSway) .. "+" .. data.TreeSwaySpeed .. "+" .. data.TreeSwayStrength .. data.TreeLeafSpeed .. "+" .. data.TreeLeafStrength .. "+" .. data.TreeSwayStartHeight .. "+" .. data.TreeSwayHeight .. "+" .. data.TreeSwayStartRadius .. "+" .. data.TreeSwayRadius
 		end
 
 		uid = uid:gsub("%.", "-")
@@ -228,7 +228,7 @@ function advMats:Set(ent, texture, data, submatid)
 			local matTable = {
 				["$basetexture"] = tempMat:GetName(),
 				["$basetexturetransform"] = "center .5 .5 scale " .. (1 / data.ScaleX) .. " " .. (1 / data.ScaleY) .. " rotate " .. data.Rotate .. " translate " .. data.OffsetX .. " " .. data.OffsetY,
-				["$vertexcolor"] = 1
+				["$model"] = 1
 			}
 
 			for k, v in pairs(data) do
@@ -282,24 +282,37 @@ function advMats:Set(ent, texture, data, submatid)
 			end
 			
 			
-			--Phong doesn't wanna work for some reason, makes props invisible. If anyone can help me fix this, it would be much appreciated.
 			if (data.UsePhong) then
+				if !string.find(tostring(data.PhongFresnel), ",") then 
+					print("TRIED TO SET PHONG FRESNEL WITH INCORRECT VALUES, PLEASE CHECK YOUR VALUES") 
+				return end
+				
+				local tintnumbers = tostring(data.PhongFresnel)
+				tintnumbers = string.Replace(tintnumbers, " ", "")
+				local tintexplo = string.Explode(",", tintnumbers)
+				for _, v in pairs(tintexplo) do
+					v = tonumber(v)
+					v = math.Round(v, 2)
+				end
+				local phongactual = "[".. tintexplo[1] .. " " .. tintexplo[2] .. " " .. tintexplo[3] .. "]"
+			
 				matTable["$phong"] = 1
-				matTable["$phongexponent"] = "1"
+				matTable["$halflambert"] = 1 -- APPARENTLY THIS NEEDED TO BE INCLUDED FOR IT TO FUCKING WORK BUT NOO, WHY SHOULD THE VDC TELL ME THAT????
+				matTable["$phongexponent"] = "0"
 				matTable["$phongboost"] = data.PhongBoost
-				matTable["$phongfresnelranges"] = data.PhongFresnel
+				matTable["$phongfresnelranges"] = phongactual
 			end
 			
-			if(data.UseTSway > 0) then
-				matTable["$treesway"] = data.UseTSway
+			if(data.UseTreeSway > 0) then
+				matTable["$treesway"] = data.UseTreeSway
 				matTable["$treeSwaySpeed"] = data.TreeSwaySpeed
 				matTable["$treeSwayStrength"] = data.TreeSwayStrength
 				matTable["$treeSwayScrumbleSpeed"] = data.TreeLeafSpeed
 				matTable["$treeSwayScrumbleStrength"] = data.TreeLeafStrength
-				if data.UseTSway == 1 then
+				if data.UseTreeSway == 1 then
 					matTable["$treeSwayHeight"] = data.TreeSwayHeight
 					matTable["$treeSwayStartHeight"] = data.TreeSwayStartHeight
-				elseif data.UseTSway == 2 then
+				elseif data.UseTreeSway == 2 then
 					matTable["$treeSwayRadius"] = data.TreeSwayRadius
 					matTable["$treeSwayStartRadius"] = data.TreeSwayStartRadius
 				end
@@ -353,8 +366,8 @@ function advMats:Set(ent, texture, data, submatid)
 			EnvMapTint 	= data.EnvMapTint or "1, 1, 1",
 			UsePhong 	= data.UsePhong or false,
 			PhongBoost 	= data.PhongBoost or 1,
-			PhongFresnel = data.PhongFresnel or "0 0.5 1",
-			UseTSway 	= data.UseTSway or 0,
+			PhongFresnel = data.PhongFresnel or "0, 0.5, 1",
+			UseTreeSway 	= data.UseTreeSway or 0,
 			TreeSwaySpeed = data.TreeSwaySpeed or 1,
 			TreeSwayStrength = data.TreeSwayStrength or 0.1,
 			TreeSwayStartHeight = data.TreeSwayStartHeight or 0.1,

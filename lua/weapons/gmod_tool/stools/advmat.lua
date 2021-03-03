@@ -130,7 +130,7 @@ function TOOL:LeftClick(trace)
 		UsePhong = usephong,
 		PhongBoost = phongboost,
 		PhongFresnel = phongfresnel,
-		UseTSway = usetreesway,
+		UseTreeSway = usetreesway,
 		TreeSwaySpeed = treeswayspeed,
 		TreeSwayStrength = treeswaystrength,
 		TreeSwayStartHeight = treeswaystartheight,
@@ -332,8 +332,6 @@ do
 			Description = "#tool.advmat.desc"
 		})
 		
-		local warningH = CPanel:Help("FEATURES MARKED WITH RED TEXT DO NOT WORK OR ARE VERY BUGGY!")
-		warningH:SetTextColor(Color(255, 0, 0))
 		
 		CPanel:NumSlider("#tool.advmat.submatid", "advmat_submatid", -1, 128, 0)
 		CPanel:ControlHelp("Setting this to -1 will override all of the model's materials.")
@@ -424,12 +422,11 @@ do
 		CPanel:CheckBox("#tool.advmat.nocull", "advmat_nocull")
 		CPanel:ControlHelp("Prevents the backfaces of a prop from being culled. Useful for infinitely thin dual-sided objects, like foliage.")
 		
-		local phongCheckBox = CPanel:CheckBox("#tool.advmat.usephong", "advmat_usephong")
-		phongCheckBox:SetTextColor(Color(255, 0, 0))
+		CPanel:CheckBox("#tool.advmat.usephong", "advmat_usephong")
 		CPanel:ControlHelp("If this box is checked, your material will use the phong shader, controlled by the settings below. REQUIRES BUMPMAP.")
 		CPanel:NumSlider("#tool.advmat.phongboost", "advmat_phongboost", 0, 100)
 		CPanel:TextEntry("#tool.advmat.phongfresnel", "advmat_phongfresnel")
-		CPanel:ControlHelp("Enter 3 numbers with spaces in between. They must be enclosed in [] brackets.")
+		CPanel:ControlHelp("Enter 3 numbers separated by commas.")
 		
 	end
 end
