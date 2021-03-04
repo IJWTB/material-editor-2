@@ -218,7 +218,7 @@ function advMats:Set(ent, texture, data, submatid)
 		end
 		
 		if	(data.UseTreeSway) then
-			uid = uid .. (data.UseTreeSway) .. "+" .. data.TreeSwaySpeed .. "+" .. data.TreeSwayStrength .. data.TreeLeafSpeed .. "+" .. data.TreeLeafStrength .. "+" .. data.TreeSwayStartHeight .. "+" .. data.TreeSwayHeight .. "+" .. data.TreeSwayStartRadius .. "+" .. data.TreeSwayRadius
+			uid = uid .. (data.UseTreeSway) .. "+" .. data.TreeSwaySpeed .. "+" .. data.TreeSwayStrength .. "+" .. data.TreeLeafSpeed .. "+" .. data.TreeLeafStrength .. "+" .. data.TreeSwayStartHeight .. "+" .. data.TreeSwayHeight .. "+" .. data.TreeSwayStartRadius .. "+" .. data.TreeSwayRadius
 		end
 
 		uid = uid:gsub("%.", "-")
