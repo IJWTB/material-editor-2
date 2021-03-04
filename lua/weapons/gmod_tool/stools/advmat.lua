@@ -4,7 +4,7 @@ TOOL.Category = "Render"
 TOOL.Name = "Advanced Material 2"
 TOOL.ClientConVar["submatid"] = "-1"
 TOOL.ClientConVar["texture"] = ""
-TOOL.ClientConVar["noisetexture"] = "concrete"
+TOOL.ClientConVar["noisetexture"] = "detail/noise_detail_01"
 TOOL.ClientConVar["scalex"] = "1"
 TOOL.ClientConVar["scaley"] = "1"
 TOOL.ClientConVar["offsetx"] = "0"
@@ -27,6 +27,18 @@ TOOL.ClientConVar["envmaptint"] = "1, 1, 1"
 TOOL.ClientConVar["usephong"] = "0"
 TOOL.ClientConVar["phongboost"] = "1"
 TOOL.ClientConVar["phongfresnel"] = "0, 0.5, 1"
+TOOL.ClientConVar["usetreesway"] = "0"
+TOOL.ClientConVar["treeswayspeed"] = "1"
+TOOL.ClientConVar["treeswaystrength"] = "0.1"
+TOOL.ClientConVar["treeswaystartheight"] = "0.1"
+TOOL.ClientConVar["treeswayheight"] = "300"
+TOOL.ClientConVar["treeswaystartradius"] = "0.1"
+TOOL.ClientConVar["treeswayradius"] = "100"
+TOOL.ClientConVar["treeleafspeed"] = "0.1"
+TOOL.ClientConVar["treeleafstrength"] = "0.1"
+TOOL.ClientConVar["alphatype"] = "0"
+TOOL.ClientConVar["nocull"] = "0"
+
 TOOL.DetailWhitelist = {
 	"concrete",
 	"metal",
@@ -62,7 +74,7 @@ function TOOL:LeftClick(trace)
 	local offsety = tonumber(self:GetClientInfo("offsety"))
 	local rotate = tonumber(self:GetClientInfo("rotate"))
 	local usenoise = tobool(self:GetClientInfo("usenoise"))
-	local noisetexture = self.DetailTranslation[self:GetClientInfo("noisetexture")] or ""
+	local noisetexture = self:GetClientInfo("noisetexture")
 	local noisescalex = tonumber(self:GetClientInfo("noisescalex"))
 	local noisescaley = tonumber(self:GetClientInfo("noisescaley"))
 	local noiseoffsetx = tonumber(self:GetClientInfo("noiseoffsetx"))
@@ -79,6 +91,17 @@ function TOOL:LeftClick(trace)
 	local usephong = tobool(self:GetClientInfo("usephong"))
 	local phongboost = tonumber(self:GetClientInfo("phongboost"))
 	local phongfresnel = self:GetClientInfo("phongfresnel")
+	local usetreesway = tonumber(self:GetClientInfo("usetreesway"))
+	local treeswayspeed = tonumber(self:GetClientInfo("treeswayspeed"))
+	local treeswaystrength = tonumber(self:GetClientInfo("treeswaystrength"))
+	local treeswaystartheight = tonumber(self:GetClientInfo("treeswaystartheight"))
+	local treeswayradius = tonumber(self:GetClientInfo("treeswayradius"))
+	local treeswaystartradius = tonumber(self:GetClientInfo("treeswaystartradius"))
+	local treeswayheight = tonumber(self:GetClientInfo("treeswayheight"))
+	local treeleafspeed = tonumber(self:GetClientInfo("treeleafspeed"))
+	local treeleafstrength = tonumber(self:GetClientInfo("treeleafstrength"))
+	local alphatype = tonumber(self:GetClientInfo("alphatype"))
+	local nocull = tonumber(self:GetClientInfo("nocull"))
 	
 	local toSet = trace.Entity
 	if toSet:GetClass() == "prop_effect" then toSet = trace.Entity:GetChildren()[1] end
@@ -107,6 +130,17 @@ function TOOL:LeftClick(trace)
 		UsePhong = usephong,
 		PhongBoost = phongboost,
 		PhongFresnel = phongfresnel,
+		UseTreeSway = usetreesway,
+		TreeSwaySpeed = treeswayspeed,
+		TreeSwayStrength = treeswaystrength,
+		TreeSwayStartHeight = treeswaystartheight,
+		TreeSwayHeight = treeswayheight,
+		TreeSwayStartRadius = treeswaystartradius,
+		TreeSwayRadius = treeswayradius,
+		TreeLeafSpeed = treeleafspeed,
+		TreeLeafStrength = treeleafstrength,
+		AlphaType = alphatype,
+		NoCull = nocull
 	}, submatid)
 
 	return true
@@ -116,26 +150,21 @@ function TOOL:RightClick(trace)
 	if (trace.Entity:IsPlayer()) then return false end
 	if (CLIENT) then return true end
 
+	toSet = trace.Entity
+	if trace.Entity:GetClass() == "prop_effect" then toSet = trace.Entity:GetChildren()[1] end
+
 	local submatid = tonumber(self:GetClientInfo("submatid"))
 	local bIsMat = false
 
-	if (IsValid(trace.Entity)) then
-		if (trace.Entity:GetMaterial() != "") then
-			if (trace.Entity:GetMaterial():sub(1, 1) != "!") then
+	if (IsValid(toSet)) then
+		if (toSet:GetMaterial() != "") then
+			if (toSet:GetMaterial():sub(1, 1) == "!") then
 				bIsMat = true
 			end
 		end
 	end
 
-	if submatid == -1 then
-		if (!bIsMat and trace.HitTexture[1] == "*" and !trace.Entity["MaterialData"..submatid]) then
-			return false
-		end
-	else
-		if (!bIsMat and trace.HitTexture[1] == "*" and !trace.Entity.SubMaterialData[submatid]) then
-			return false
-		end
-	end
+
 
 	local tempMat = Material(trace.HitTexture)
 	local hitNoise = tempMat:GetString("$detail")
@@ -150,26 +179,33 @@ function TOOL:RightClick(trace)
 
 	local data = {}
 
-	if submatid == -1 or trace.HitWorld then
-		data = trace.Entity["MaterialData"..submatid] or {
-		texture = bIsMat and trace.Entity:GetMaterial() or trace.HitTexture,
-		scalex = 1,
-		scaley = 1,
-		offsetx = 0,
-		offsety = 0,
-		usenoise = noiseTexture and 1 or 0,
-		noisetexture = noiseTexture
-	}
-	elseif submatid > -1 and trace.HitNonWorld then
-		data = trace.Entity.SubMaterialData[submatid] or {
-		texture = bIsMat and trace.Entity:GetMaterial() or trace.HitTexture,
-		scalex = 1,
-		scaley = 1,
-		offsetx = 0,
-		offsety = 0,
-		usenoise = noiseTexture and 1 or 0,
-		noisetexture = noiseTexture
-	}
+	if bIsMat or trace.HitWorld then
+		local worldTex = trace.HitTexture
+		if trace.HitSky then worldTex = GetConVar("sv_skyname"):GetString() end -- Get skybox texture name if we right click the sky, instead of returning TOOLSSKYBOX
+		
+		if submatid == -1 or trace.HitWorld then
+			data = toSet["MaterialData-1"] or {
+			texture = bIsMat and trace.Entity:GetMaterial() or worldTex,
+			scalex = 1,
+			scaley = 1,
+			offsetx = 0,
+			offsety = 0,
+			usenoise = noiseTexture and 1 or 0,
+			noisetexture = noiseTexture
+		}
+		elseif submatid > -1 and trace.HitNonWorld then
+			data = toSet.SubMaterialData[submatid] or {
+			texture = bIsMat and trace.Entity:GetMaterial() or worldTex,
+			scalex = 1,
+			scaley = 1,
+			offsetx = 0,
+			offsety = 0,
+			usenoise = noiseTexture and 1 or 0,
+			noisetexture = noiseTexture
+		}
+		end
+	else
+		self:GetOwner():ConCommand("advmat_texture " .. toSet:GetMaterials()[1]) 
 	end
 
 	
@@ -187,8 +223,12 @@ function TOOL:Reload(trace)
 	local submatid = tonumber(self:GetClientInfo("submatid"))
 	if (!IsValid(trace.Entity)) then return false end
 	if (CLIENT) then return true end
+	
+	toSet = trace.Entity
+	
+	if trace.Entity:GetClass() == "prop_effect" then toSet = trace.Entity:GetChildren()[1] end
 
-	advMats:Set(trace.Entity, "", {}, submatid)
+	advMats:Set(toSet, "", {}, submatid)
 
 	return true
 end
@@ -231,89 +271,6 @@ function TOOL:Think()
 			return
 		end
 
-		if (!self.PreviewMat or !self.PreviewMatNoise) then
-			self.PreviewMat = CreateMaterial("AdvMatPreview", "VertexLitGeneric", {
-				["$basetexture"] = texture,
-				["$basetexturetransform"] = "center .5 .5 scale " .. (1 / scalex) .. " " .. (1 / scaley) .. " rotate 0 translate " .. offsetx .. " " .. offsety,
-				["$vertexcolor"] = 1,
-				["$vertexalpha"] = 0
-			})
-
-			self.PreviewMatNoise = {
-				concrete = CreateMaterial("AdvMatPreviewNoiseConcrete", "VertexLitGeneric", {
-					["$basetexture"] = texture,
-					["$basetexturetransform"] = "center .5 .5 scale " .. (1 / noisescalex) .. " " .. (1 / noisescaley) .. " rotate 0 translate " .. noiseoffsetx .. " " .. noiseoffsety,
-					["$vertexcolor"] = 1,
-					["$vertexalpha"] = 0,
-					["$detail"] = "detail/noise_detail_01",
-					["$detailtexturetransform"] = "center .5 .5 scale 1 1 rotate 0 translate 0 0",
-					["$detailblendmode"] = 0,
-				}),
-
-				rock = CreateMaterial("AdvMatPreviewNoiseRock", "VertexLitGeneric", {
-					["$basetexture"] = texture,
-					["$basetexturetransform"] = "center .5 .5 scale " .. (1 / noisescalex) .. " " .. (1 / noisescaley) .. " rotate 0 translate " .. noiseoffsetx .. " " .. noiseoffsety,
-					["$vertexcolor"] = 1,
-					["$vertexalpha"] = 0,
-					["$detail"] = "detail/rock_detail_01",
-					["$detailtexturetransform"] = "center .5 .5 scale 1 1 rotate 0 translate 0 0",
-					["$detailblendmode"] = 0,
-				}),
-
-				metal = CreateMaterial("AdvMatPreviewNoiseMetal", "VertexLitGeneric", {
-					["$basetexture"] = texture,
-					["$basetexturetransform"] = "center .5 .5 scale " .. (1 / noisescalex) .. " " .. (1 / noisescaley) .. " rotate 0 translate " .. noiseoffsetx .. " " .. noiseoffsety,
-					["$vertexcolor"] = 1,
-					["$vertexalpha"] = 0,
-					["$detail"] = "detail/metal_detail_01",
-					["$detailtexturetransform"] = "center .5 .5 scale 1 1 rotate 0 translate 0 0",
-					["$detailblendmode"] = 0,
-				}),
-
-				plaster = CreateMaterial("AdvMatPreviewNoisePlaster", "VertexLitGeneric", {
-					["$basetexture"] = texture,
-					["$basetexturetransform"] = "center .5 .5 scale " .. (1 / noisescalex) .. " " .. (1 / noisescaley) .. " rotate 0 translate " .. noiseoffsetx .. " " .. noiseoffsety,
-					["$vertexcolor"] = 1,
-					["$vertexalpha"] = 0,
-					["$detail"] = "detail/plaster_detail_01",
-					["$detailtexturetransform"] = "center .5 .5 scale 1 1 rotate 0 translate 0 0",
-					["$detailblendmode"] = 0,
-				}),
-
-			}
-		end
-
-		if (bUseNoise) then
-			local noiseMatrix = Matrix()
-			noiseMatrix:Scale(Vector(1 / noisescalex, 1 / noisescaley, 1))
-			noiseMatrix:Translate(Vector(noiseoffsetx, noiseoffsety, 0))
-
-			local noiseTexture = self:GetClientInfo("noisetexture")
-
-			if (!table.HasValue(self.DetailWhitelist, noiseTexture:lower())) then
-				noiseTexture = "concrete"
-			end
-
-			self.PreviewMatNoise[noiseTexture]:SetMatrix("$detailtexturetransform", noiseMatrix)
-
-			if (self.noise != self:GetClientInfo("noisetexture")) then
-				self.noise = noiseTexture
-
-				self.Preview = self.PreviewMatNoise[noiseTexture]
-			end
-		end
-
-		local mat = bUseNoise and self.Preview or self.PreviewMat
-
-		local matrix = Matrix()
-		matrix:Scale(Vector(1 / scalex, 1 / scaley, 1))
-		matrix:Translate(Vector(offsetx, offsety, 0))
-
-		if (mat:GetString("$basetexture") != texture) then
-			mat:SetTexture("$basetexture", Material(texture):GetTexture("$basetexture"))
-		end
-
-		mat:SetMatrix("$basetexturetransform", matrix)
 	end
 end
 
@@ -366,7 +323,8 @@ do
 		scalex = 1,
 		scaley = 1,
 		offsetx = 0,
-		offsety = 0
+		offsety = 0,
+		rotate = 0
 	}
 
 	function TOOL.BuildCPanel(CPanel)
@@ -374,8 +332,6 @@ do
 			Description = "#tool.advmat.desc"
 		})
 		
-		local warningH = CPanel:Help("FEATURES MARKED WITH RED TEXT DO NOT WORK OR ARE VERY BUGGY!")
-		warningH:SetTextColor(Color(255, 0, 0))
 		
 		CPanel:NumSlider("#tool.advmat.submatid", "advmat_submatid", -1, 128, 0)
 		CPanel:ControlHelp("Setting this to -1 will override all of the model's materials.")
@@ -397,12 +353,9 @@ do
 		end
 
 		CPanel:CheckBox("#tool.advmat.usenoise", "advmat_usenoise")
-		CPanel:ControlHelp("If this box is checked, your material will be sharpened using an HD detail texture, controlled by the settings below.")
+		CPanel:ControlHelp("If this box is checked, your material will be sharpened using an HD detail texture, specified below.")
 
-		CPanel:AddControl("ComboBox", {
-			Label = "#tool.advmat.noisetexture",
-			Options = list.Get("tool.advmat.details")
-		})
+		CPanel:TextEntry("#tool.advmat.noisetexture", "advmat_noisetexture")
 
 		CPanel:NumSlider("#tool.advmat.scalex", "advmat_noisescalex", 0.01, 5, 2)
 		CPanel:NumSlider("#tool.advmat.scaley", "advmat_noisescaley", 0.01, 5, 2)
@@ -433,12 +386,47 @@ do
 		CPanel:TextEntry("#tool.advmat.envmaptint", "advmat_envmaptint")
 		CPanel:ControlHelp("Enter 3 numbers. They must be in the range of 0 to 1 and must be separated by commas.")
 		
-		local phongCheckBox = CPanel:CheckBox("#tool.advmat.usephong", "advmat_usephong")
-		phongCheckBox:SetTextColor(Color(255, 0, 0))
+		local tscombox, tslab = CPanel:ComboBox("Tree Sway", "advmat_usetreesway")
+		tscombox:AddChoice("None", 0)
+		tscombox:AddChoice("Classic", 1)
+		tscombox:AddChoice("Radial", 2)
+		CPanel:ControlHelp("If enabled, your prop will sway according to the sway type. DOES NOT WORK WITH BUMPMAPS!")
+		CPanel:NumSlider("#tool.advmat.treeswayspeed", "advmat_treeswayspeed", 0, 100)
+		CPanel:ControlHelp("How quickly the tree sways (as a multiplier of time)")
+		CPanel:NumSlider("#tool.advmat.treeswaystrength", "advmat_treeswaystrength", 0, 500)
+		CPanel:ControlHelp("How much the tree sways (as a multiplier of position)")
+		CPanel:NumSlider("#tool.advmat.treeleafspeed", "advmat_treeleafspeed", 0, 100)
+		CPanel:ControlHelp("How quickly the leaves move (as a multiplier of time)")
+		CPanel:NumSlider("#tool.advmat.treeleafstrength", "advmat_treeleafstrength", 0, 500)
+		CPanel:ControlHelp("How much the leaves move (as a multiplier of position)")
+		
+		CPanel:Help("Classic TS Settings")
+		CPanel:NumSlider("#tool.advmat.treeswaystartheight", "advmat_treeswaystartheight", 0, 1)
+		CPanel:ControlHelp("Portion of the height of the model at which the effect starts to fade in. (0 to 1)")
+		CPanel:NumSlider("#tool.advmat.treeswayheight", "advmat_treeswayheight", 0, 10000)
+		CPanel:ControlHelp("Height at which the effect is on fully (in world units)")
+		
+		CPanel:Help("Radial TS Settings")
+		CPanel:NumSlider("#tool.advmat.treeswaystartradius", "advmat_treeswaystartradius", 0, 1)
+		CPanel:ControlHelp("Portion of radius at which the effect starts to fade in (0 to 1)")
+		CPanel:NumSlider("#tool.advmat.treeswayradius", "advmat_treeswayradius", 0, 10000)
+		CPanel:ControlHelp("Radius at which the effect is on fully (in world units)")
+		
+		local alphabox, alphalab = CPanel:ComboBox("Alpha Type", "advmat_alphatype")
+		alphabox:AddChoice("None", 0)
+		alphabox:AddChoice("AlphaTest", 1)
+		alphabox:AddChoice("Vertex Alpha", 2)
+		alphabox:AddChoice("Translucent", 3)
+		CPanel:ControlHelp("Sets what type of alpha your prop should use if it has transparency in its base texture. If unsure, set to AlphaTest.")
+		
+		CPanel:CheckBox("#tool.advmat.nocull", "advmat_nocull")
+		CPanel:ControlHelp("Prevents the backfaces of a prop from being culled. Useful for infinitely thin dual-sided objects, like foliage.")
+		
+		CPanel:CheckBox("#tool.advmat.usephong", "advmat_usephong")
 		CPanel:ControlHelp("If this box is checked, your material will use the phong shader, controlled by the settings below. REQUIRES BUMPMAP.")
 		CPanel:NumSlider("#tool.advmat.phongboost", "advmat_phongboost", 0, 100)
 		CPanel:TextEntry("#tool.advmat.phongfresnel", "advmat_phongfresnel")
-		CPanel:ControlHelp("Enter 3 numbers with spaces in between. They must be enclosed in [] brackets.")
+		CPanel:ControlHelp("Enter 3 numbers separated by commas.")
 		
 	end
 end
@@ -460,22 +448,23 @@ if (CLIENT) then
 	language.Add("tool.advmat.rotate", "Rotation")
 	language.Add("tool.advmat.usenoise", "Use noise texture")
 	language.Add("tool.advmat.submatid", "SubMaterial ID")
+	
+	language.Add("tool.advmat.treeswayspeed", "Sway Speed")
+	language.Add("tool.advmat.treeswaystrength", "Sway Strength")
+	language.Add("tool.advmat.treeswaystartheight", "Sway Start Height")
+	language.Add("tool.advmat.treeswayheight", "Sway Height")
+	language.Add("tool.advmat.treeswaystartradius", "Sway Start Radius")
+	language.Add("tool.advmat.treeswayradius", "Sway Radius")
+	language.Add("tool.advmat.treeleafspeed", "Leaf Speed")
+	language.Add("tool.advmat.treeleafstrength", "Leaf Strength")
+	
+	language.Add("tool.advmat.nocull", "No Cull")
 
-	language.Add("tool.advmat.noisetexture", "Detail type")
+	language.Add("tool.advmat.noisetexture", "Detail Texture")
 
 	language.Add("tool.advmat.reset.base", "Reset Texture Transformations")
 	language.Add("tool.advmat.reset.noise", "Reset Noise Transformations")
 	language.Add("tool.advmat.reset.bump", "Reset Bump Transformations")
-
-	language.Add("tool.advmat.details.concrete", "Concrete")
-	language.Add("tool.advmat.details.metal", "Metal")
-	language.Add("tool.advmat.details.plaster", "Plaster")
-	language.Add("tool.advmat.details.rock", "Rock")
-
-	list.Set("tool.advmat.details", "#tool.advmat.details.concrete", {advmat_noisetexture = "concrete"})
-	list.Set("tool.advmat.details", "#tool.advmat.details.metal", {advmat_noisetexture = "metal"})
-	list.Set("tool.advmat.details", "#tool.advmat.details.plaster", {advmat_noisetexture = "plaster"})
-	list.Set("tool.advmat.details", "#tool.advmat.details.rock", {advmat_noisetexture = "rock"})
 	
 	language.Add("tool.advmat.usebump", "Use custom bump texture")
 	language.Add("tool.advmat.bumptexture", "Bump texture to use")
