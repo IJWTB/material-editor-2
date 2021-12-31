@@ -1,7 +1,7 @@
 AddCSLuaFile()
 
 TOOL.Category = "Render"
-TOOL.Name = "Advanced Material 2"
+TOOL.Name = "#tool.advmat.name"
 TOOL.ClientConVar["submatid"] = "-1"
 TOOL.ClientConVar["texture"] = ""
 TOOL.ClientConVar["noisetexture"] = "detail/noise_detail_01"
